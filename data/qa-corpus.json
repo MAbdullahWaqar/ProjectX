@@ -6,6 +6,8 @@
     { "id": "income_limit", "ruleId": "MTSP-LIMIT", "keywords": ["income limit", "maximum income", "how much can i make", "how much can i earn", "area median income", "ami"] },
     { "id": "set_aside", "ruleId": "MIN-SET-ASIDE", "keywords": ["set aside", "set-aside", "minimum set aside", "20 50", "40 60"] },
     { "id": "income_averaging", "ruleId": "INCOME-AVERAGING", "keywords": ["income averaging", "average income test", "averaging"] },
+    { "id": "rent_limit", "ruleId": "RENT-LIMIT", "keywords": ["rent limit", "maximum rent", "max rent", "how much rent", "gross rent", "rent cap", "what rent"] },
+    { "id": "limit_derivation", "ruleId": "LIMIT-DERIVATION", "keywords": ["how is the 60", "derived", "derivation", "120% of the 50", "rounded", "where do the limits come from", "how are limits calculated"] },
     { "id": "asset_income", "ruleId": "ASSET-INCOME", "keywords": ["assets", "asset income", "savings", "bank account", "imputed income", "passbook"] },
     { "id": "student_rule", "ruleId": "STUDENT-RULE", "keywords": ["student", "full time student", "full-time student", "college", "students"] },
     { "id": "next_available_unit", "ruleId": "NEXT-AVAILABLE-UNIT", "keywords": ["140", "next available unit", "income increases", "income goes up", "over income"] },

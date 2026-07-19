@@ -24,7 +24,7 @@
   // MassHousing 2026 HUD Income & Rent Limits table (effective 2026-05-01).
   // Values by household size, index 0 = 1 person ... index 7 = 8 persons.
   const RULES_CORPUS = {
-    version: '2026.2',
+    version: '2026.3',
     frozenOn: '2026-07-19',
     program: 'Low-Income Housing Tax Credit (LIHTC)',
     ruleYear: 2026,
@@ -61,8 +61,18 @@
       },
       {
         id: 'INCOME-AVERAGING', title: 'Average Income Test',
-        text: 'Under the Average Income Test, units may be designated at 20/30/40/50/60/70/80% AMI so long as the average of the designated limits does not exceed 60% AMI. This is why the 30%, 50%, 60% and 80% columns all matter.',
+        text: 'Under the Average Income Test, units may be designated at 20/30/40/50/60/70/80% AMI so long as the average of the designated limits does not exceed 60% AMI. Worked example: a project designates three units at 40%, 60% and 80% AMI — the average is (40 + 60 + 80) ÷ 3 = 60%, so the election is valid. Designating them at 50%, 70% and 80% would average 66.7% and would NOT be valid. This is why the 30%, 50%, 60% and 80% columns all matter.',
         source: 'Internal Revenue Code § 42(g)(1)(C)', sourceUrl: 'https://www.law.cornell.edu/uscode/text/26/42', effectiveDate: '2018-03-23'
+      },
+      {
+        id: 'LIMIT-DERIVATION', title: 'How the 60% limit column is derived',
+        text: 'HUD publishes the 50% AMI (Very Low Income) limits directly; the 60% MTSP column is 120% of the 50% column, rounded to the nearest $10. Worked example for a household of 3 in this metro: $77,150 × 1.20 = $92,580 — exactly the published 60% figure. The 30% and 80% columns are published directly by HUD.',
+        source: 'HUD FY2026 MTSP Income Limits — methodology', sourceUrl: 'https://www.huduser.gov/portal/datasets/mtsp.html', effectiveDate: '2026-05-01'
+      },
+      {
+        id: 'RENT-LIMIT', title: 'Maximum gross rent',
+        text: 'LIHTC maximum gross rent for a unit is 30% of the imputed income limitation, paid monthly. Occupancy is imputed from bedrooms — 1 person for a studio, 1.5 persons per bedroom otherwise (a half person uses the average of the two adjacent household-size limits). Worked example, 2-bedroom at 60% AMI in this metro: imputed household = 3 persons, limit $92,580; maximum gross rent = $92,580 × 30% ÷ 12 = $2,314/month (gross rent includes a utility allowance where tenants pay utilities).',
+        source: 'Internal Revenue Code § 42(g)(2)', sourceUrl: 'https://www.law.cornell.edu/uscode/text/26/42', effectiveDate: '1986-10-22'
       },
       {
         id: 'INCOME-DEF', title: 'What counts as annual income',
@@ -86,8 +96,8 @@
       },
       {
         id: 'PAYSTUB-FRESHNESS', title: 'How recent income documents must be',
-        text: 'Income verification documents such as pay stubs are treated as current when dated within 120 days of the application date. Older pay stubs are flagged as stale and should be refreshed.',
-        source: 'RealDoor demo gold checklist (freshness policy)', sourceUrl: null, effectiveDate: '2026-01-01'
+        text: 'Verification documents such as pay stubs are valid for 120 days from the date of receipt: RealDoor treats an income document as current when dated within 120 days of the application date, and flags older ones as stale so they can be refreshed. Individual owners or management companies may apply a stricter window; check with the property.',
+        source: 'HUD Handbook 4350.3 REV-1, Paragraph 5-13.B (Verification: effective term)', sourceUrl: 'https://www.hud.gov/program_offices/administration/hudclips/handbooks/hsgh/4350.3', effectiveDate: '2013-06-01'
       }
     ]
   };
@@ -131,6 +141,8 @@
     { id: 'income_limit', ruleId: 'MTSP-LIMIT', keywords: ['income limit', 'maximum income', 'how much can i make', 'how much can i earn', 'area median income', 'ami'] },
     { id: 'set_aside', ruleId: 'MIN-SET-ASIDE', keywords: ['set aside', 'set-aside', 'minimum set aside', '20 50', '40 60'] },
     { id: 'income_averaging', ruleId: 'INCOME-AVERAGING', keywords: ['income averaging', 'average income test', 'averaging'] },
+    { id: 'rent_limit', ruleId: 'RENT-LIMIT', keywords: ['rent limit', 'maximum rent', 'max rent', 'how much rent', 'gross rent', 'rent cap', 'what rent'] },
+    { id: 'limit_derivation', ruleId: 'LIMIT-DERIVATION', keywords: ['how is the 60', 'derived', 'derivation', '120% of the 50', 'rounded', 'where do the limits come from', 'how are limits calculated'] },
     { id: 'asset_income', ruleId: 'ASSET-INCOME', keywords: ['assets', 'asset income', 'savings', 'bank account', 'imputed income', 'passbook'] },
     { id: 'student_rule', ruleId: 'STUDENT-RULE', keywords: ['student', 'full time student', 'full-time student', 'college', 'students'] },
     { id: 'next_available_unit', ruleId: 'NEXT-AVAILABLE-UNIT', keywords: ['140', 'next available unit', 'income increases', 'income goes up', 'over income'] },
@@ -260,6 +272,49 @@
     return { available: true, impliedPeriods: impliedPeriods, roundedPeriods: rounded, expectedPeriods: expectedPeriods, cleanInteger: cleanInteger, plausibleByDate: plausibleByDate, corroborated: corroborated, note: note };
   }
 
+  // 2026 SSI federal benefit rates (2.8% COLA announced October 2025). Used only
+  // as a plausibility band to calibrate benefit-letter confidence — never as an
+  // eligibility input.
+  const SSI_FBR_2026 = {
+    individual: 994, couple: 1491,
+    source: 'SSA — SSI Federal Payment Amounts for 2026',
+    sourceUrl: 'https://www.ssa.gov/oact/cola/SSI.html'
+  };
+
+  // Benefit-letter cross-check: date ordering sanity + (for SSI) a published
+  // federal-benefit-rate plausibility band, so benefit confidences are computed
+  // the same way pay stub confidences are.
+  function reconcileBenefit(raw) {
+    const amt = money(raw.monthly_benefit_amount);
+    if (amt == null) return { available: false };
+    const checks = [];
+    if (isValidISODate(raw.award_effective_date) && isValidISODate(raw.letter_date)) {
+      const inOrder = daysBetween(raw.award_effective_date, raw.letter_date) >= 0;
+      checks.push({
+        id: 'date_order', pass: inOrder,
+        text: inOrder
+          ? 'letter date ' + raw.letter_date + ' is on/after the award effective date ' + raw.award_effective_date
+          : 'letter date ' + raw.letter_date + ' is BEFORE the award effective date ' + raw.award_effective_date + ' — dates are inconsistent'
+      });
+    }
+    if (/\bssi\b|supplemental security income/i.test(String(raw.benefit_type || ''))) {
+      // Band: above $0 and at or below the 2026 couple FBR plus headroom for
+      // state supplements. Partial (reduced) SSI amounts are common and valid.
+      const ceiling = SSI_FBR_2026.couple + 300;
+      const inBand = amt > 0 && amt <= ceiling;
+      checks.push({
+        id: 'ssi_band', pass: inBand,
+        text: inBand
+          ? '$' + amt.toLocaleString() + '/month is within the plausible SSI range (2026 federal benefit rate: $' + SSI_FBR_2026.individual.toLocaleString() + ' individual / $' + SSI_FBR_2026.couple.toLocaleString() + ' couple, plus state supplement)'
+          : '$' + amt.toLocaleString() + '/month is outside the plausible SSI range (2026 federal benefit rate: $' + SSI_FBR_2026.individual.toLocaleString() + ' individual / $' + SSI_FBR_2026.couple.toLocaleString() + ' couple) — please verify'
+      });
+    }
+    if (!checks.length) return { available: true, corroborated: null, checks: checks, note: 'No cross-check applies (missing dates and non-SSI benefit type); amount taken as stated — please verify.' };
+    const corroborated = checks.every(function (c) { return c.pass; });
+    const note = 'Benefit cross-check: ' + checks.map(function (c) { return c.text; }).join('; ') + '.';
+    return { available: true, corroborated: corroborated, checks: checks, note: note };
+  }
+
   function mkField(key, hit, confidence, note) {
     if (!hit) return { key: key, value: null, confidence: 0, evidence: null, status: 'missing', note: note || null };
     return { key: key, value: hit.value, confidence: confidence, evidence: hit.evidence, status: confidence >= 0.7 ? 'ok' : 'needs_review', note: note || null };
@@ -309,16 +364,41 @@
     const amtVal = amt ? { value: money(amt.value), evidence: amt.evidence } : null;
     if (award) award = { value: normalizeDate(award.value), evidence: award.evidence };
     if (letter) letter = { value: normalizeDate(letter.value), evidence: letter.evidence };
+    const rec = reconcileBenefit({
+      benefit_type: btype ? btype.value : null,
+      monthly_benefit_amount: amtVal ? amtVal.value : null,
+      award_effective_date: award ? award.value : null,
+      letter_date: letter ? letter.value : null
+    });
+    const amtConf = !amtVal ? 0
+      : rec.corroborated === true ? 0.95
+        : rec.corroborated === false ? 0.55
+          : 0.85;
     return {
-      docType: 'benefit', supported: true, injections: detectInjection(text), reconcile: { available: false },
+      docType: 'benefit', supported: true, injections: detectInjection(text), reconcile: rec,
       fields: [
         mkField('recipient_name', recip, 0.85),
         mkField('benefit_type', btype, btype ? 0.9 : 0),
-        mkField('monthly_benefit_amount', amtVal, amtVal ? 0.9 : 0),
+        mkField('monthly_benefit_amount', amtVal, amtConf, rec.available ? rec.note : null),
         mkField('award_effective_date', award, award && isValidISODate(award.value) ? 0.9 : (award ? 0.5 : 0)),
         mkField('letter_date', letter, letter && isValidISODate(letter.value) ? 0.9 : (letter ? 0.5 : 0))
       ]
     };
+  }
+
+  // Rebuild line structure from pdf.js textContent items so PDF documents flow
+  // through the exact same regex extraction path as pasted text (data, never code).
+  function pdfItemsToText(items) {
+    let out = '', lastY = null;
+    (items || []).forEach(function (it) {
+      if (it.str == null) return;
+      const y = it.transform ? it.transform[5] : null;
+      if (lastY != null && y != null && Math.abs(y - lastY) > 2 && out && out[out.length - 1] !== '\n') out += '\n';
+      out += it.str;
+      if (it.hasEOL && out[out.length - 1] !== '\n') { out += '\n'; lastY = null; return; }
+      if (y != null) lastY = y;
+    });
+    return out;
   }
 
   function extractDocument(text) {
@@ -391,6 +471,28 @@
     const n = Number(householdSize);
     if (!Number.isInteger(n) || n < 1 || n > table.length) return null;
     return { value: table[n - 1], amiPct: amiPct, householdSize: n, source: RULES_CORPUS.incomeLimits.source, sourceUrl: RULES_CORPUS.incomeLimits.sourceUrl, effectiveDate: RULES_CORPUS.incomeLimits.effectiveDate };
+  }
+
+  // LIHTC maximum gross rent: 30% of the imputed income limitation (IRC § 42(g)(2)).
+  // Occupancy imputed from bedrooms: studio = 1 person, otherwise 1.5 persons per
+  // bedroom; a half person uses the average of the two adjacent household limits.
+  function rentLimit(bedrooms, amiPct) {
+    const b = Number(bedrooms);
+    if (!Number.isInteger(b) || b < 0 || b > 5) return null;
+    const persons = b === 0 ? 1 : b * 1.5;
+    const lo = lookupLimit(Math.floor(persons), amiPct), hi = lookupLimit(Math.ceil(persons), amiPct);
+    if (!lo || !hi) return null;
+    const imputed = (lo.value + hi.value) / 2;
+    const monthly = Math.floor(imputed * 0.30 / 12);
+    return {
+      bedrooms: b, amiPct: amiPct, imputedPersons: persons, imputedIncomeLimit: imputed, monthlyGrossRent: monthly,
+      formula: (persons === Math.floor(persons)
+        ? '$' + imputed.toLocaleString() + ' (' + persons + '-person limit)'
+        : '($' + lo.value.toLocaleString() + ' + $' + hi.value.toLocaleString() + ') ÷ 2 = $' + imputed.toLocaleString() + ' (' + persons + ' imputed persons)')
+        + ' × 30% ÷ 12 = $' + monthly.toLocaleString() + '/month',
+      source: 'Internal Revenue Code § 42(g)(2); limits: ' + RULES_CORPUS.incomeLimits.source,
+      effectiveDate: RULES_CORPUS.incomeLimits.effectiveDate
+    };
   }
 
   // INFORMATION ONLY — never an eligibility verdict.
@@ -529,7 +631,9 @@
     RULES_CORPUS: RULES_CORPUS, FIELD_ALLOWLIST: FIELD_ALLOWLIST, FIELD_DENYLIST: FIELD_DENYLIST,
     GOLD_CHECKLIST: GOLD_CHECKLIST, QA_CORPUS: QA_CORPUS,
     detectDocType: detectDocType, detectInjection: detectInjection, extractDocument: extractDocument,
+    pdfItemsToText: pdfItemsToText,
     extractPaystub: extractPaystub, extractBenefit: extractBenefit, reconcileIncome: reconcileIncome,
+    reconcileBenefit: reconcileBenefit, SSI_FBR_2026: SSI_FBR_2026, rentLimit: rentLimit,
     frequencyMultiplier: frequencyMultiplier, dedupeSources: dedupeSources, annualizeIncome: annualizeIncome,
     lookupLimit: lookupLimit, compareIncome: compareIncome, answerQuestion: answerQuestion,
     evaluateChecklist: evaluateChecklist, buildPacket: buildPacket, renderPacketMarkdown: renderPacketMarkdown,

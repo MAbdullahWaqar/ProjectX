@@ -1,5 +1,5 @@
 {
-  "version": "2026.2",
+  "version": "2026.3",
   "frozenOn": "2026-07-19",
   "program": "Low-Income Housing Tax Credit (LIHTC)",
   "ruleYear": 2026,
@@ -24,11 +24,13 @@
     { "id": "PROGRAM", "title": "Program & rule year", "source": "HUD FY2026 MTSP Income Limits", "effectiveDate": "2026-05-01" },
     { "id": "MTSP-LIMIT", "title": "Household income limit", "source": "HUD FY2026 MTSP Income Limits", "effectiveDate": "2026-05-01" },
     { "id": "MIN-SET-ASIDE", "title": "Minimum set-aside", "source": "Internal Revenue Code § 42(g)(1)", "effectiveDate": "2018-03-23" },
-    { "id": "INCOME-AVERAGING", "title": "Average Income Test", "source": "Internal Revenue Code § 42(g)(1)(C)", "effectiveDate": "2018-03-23" },
+    { "id": "INCOME-AVERAGING", "title": "Average Income Test (with worked example)", "source": "Internal Revenue Code § 42(g)(1)(C)", "effectiveDate": "2018-03-23" },
+    { "id": "LIMIT-DERIVATION", "title": "How the 60% limit column is derived (with worked example)", "source": "HUD FY2026 MTSP Income Limits — methodology", "effectiveDate": "2026-05-01" },
+    { "id": "RENT-LIMIT", "title": "Maximum gross rent (with worked example)", "source": "Internal Revenue Code § 42(g)(2)", "effectiveDate": "1986-10-22" },
     { "id": "INCOME-DEF", "title": "What counts as annual income", "source": "HUD Handbook 4350.3, Chapter 5 (Determining Income)", "effectiveDate": "2013-06-01" },
     { "id": "ASSET-INCOME", "title": "Income from assets", "source": "HUD Handbook 4350.3, Chapter 5 (Assets)", "effectiveDate": "2013-06-01" },
     { "id": "STUDENT-RULE", "title": "Full-time student household rule", "source": "Internal Revenue Code § 42(i)(3)(D)", "effectiveDate": "1986-10-22" },
     { "id": "NEXT-AVAILABLE-UNIT", "title": "The 140% Next Available Unit rule", "source": "Internal Revenue Code § 42(g)(2)(D)(ii)", "effectiveDate": "1989-12-19" },
-    { "id": "PAYSTUB-FRESHNESS", "title": "How recent income documents must be", "source": "RealDoor demo gold checklist (freshness policy)", "effectiveDate": "2026-01-01" }
+    { "id": "PAYSTUB-FRESHNESS", "title": "How recent income documents must be", "source": "HUD Handbook 4350.3 REV-1, Paragraph 5-13.B (Verification: effective term)", "effectiveDate": "2013-06-01" }
   ]
 }

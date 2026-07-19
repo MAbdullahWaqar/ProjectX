@@ -12,7 +12,7 @@ packet — without ever deciding eligibility.**
 
 - **One metro:** Boston-Cambridge-Quincy, MA-NH HUD Metro FMR Area
 - **One program:** Low-Income Housing Tax Credit (LIHTC), using HUD MTSP income limits
-- **One rule year:** FY2026 — a frozen, versioned corpus (v2026.2)
+- **One rule year:** FY2026 — a frozen, versioned corpus (v2026.3)
 - **Real published limits:** official HUD FY2026 MTSP figures, effective **2026-05-01** (see [Data provenance](#data-provenance))
 - **Synthetic docs only.** No real renter data.
 
@@ -20,39 +20,48 @@ packet — without ever deciding eligibility.**
 
 ## Run it
 
-No build step, no dependencies to view.
+No build step. pdf.js and the Inter font are **vendored** into the repo (`vendor/`), so the
+app runs entirely same-origin — a strict CSP blocks any external request.
 
 ```bash
-open index.html            # macOS — just open the file
-# or serve it (recommended; enables the optional encrypted-save feature)
-npm start                  # -> http://localhost:5173
+npm start                  # -> http://localhost:5173 (serves with CSP + security headers)
+# or: open index.html      # macOS — works too; serving is recommended
 ```
 
 ### Run the tests
 
 ```bash
-npm test                   # 52 engine tests (pure logic) — zero dependencies
-npm run test:ui            # 27 end-to-end UI-flow tests in jsdom (installs jsdom)
+npm test                   # 68 engine tests (pure logic) — zero dependencies
+npm run test:accuracy      # gold-field harness -> prints "29/29 fields correct, 0 abstained"
+npm run test:pdf           # 9 tests: sample PDFs through real pdf.js into the same engine path
+npm run test:ui            # 46 end-to-end UI-flow tests in jsdom
+npm run test:all           # all four suites
 ```
 
-`npm test` covers variant-label extraction, the YTD reconciliation that calibrates
-confidence, income de-duplication, the real MTSP numbers, the refusal/abstain logic, the
-deepened rule corpus, checklist freshness, and packet generation. `npm run test:ui` drives
-the real journey in a DOM: consent → extract → confirm → correct → math → Q&A → checklist
-(incl. self-attest) → packet → the three safety tests.
+`npm test` covers variant-label extraction, the YTD and benefit-letter reconciliations that
+calibrate confidence, income de-duplication, the real MTSP numbers, rent limits, the
+refusal/abstain logic, the 11-rule corpus, checklist freshness, and packet generation.
+`npm run test:accuracy` measures field-level extraction accuracy against gold values for
+every sample. `npm run test:ui` drives the real journey in a DOM: onboarding → consent
+(incl. withdrawal) → extract → confirm → correct → math → Q&A → checklist (incl.
+self-attest + progress) → packet (incl. print sheet) → the three safety tests.
 
 ---
 
 ## The three-stage journey
 
 **01 · Profile — human-confirmed extraction**
-Upload/paste a synthetic pay stub or benefit letter (samples included, incl. an *alt-format*
-stub with different labels). RealDoor extracts **only allowlisted fields**, shows the
-**exact source text (evidence box)** behind each value, and a **confidence score calibrated
-by a real YTD cross-check** (`YTD ÷ current gross` must be a clean, date-plausible number of
-pay periods) — not a constant. Low-confidence fields are flagged *needs review*. You
-**confirm or correct** before reuse, and confirmed fields **remain editable** — corrections
-flow downstream.
+Upload a synthetic pay stub or benefit letter — **PDF or text** (samples included in both
+formats, incl. an *alt-format* stub with different labels; PDFs are read in-browser by
+vendored pdf.js and flow through the identical extraction path as pasted text). RealDoor
+extracts **only allowlisted fields**, shows the **exact source text (evidence box)** behind
+each value, and a **confidence score calibrated by independent cross-checks**: pay stubs by
+the YTD reconciliation (`YTD ÷ current gross` must be a clean, date-plausible number of pay
+periods), benefit letters by date-order sanity plus the published **2026 SSI federal benefit
+rate** plausibility band — never a constant. An in-app legend explains what each confidence
+level means. Low-confidence fields are flagged *needs review*. You **confirm or correct**
+before reuse, and confirmed fields **remain editable** — corrections flow downstream.
+Consent is **withdrawable** at any time, with one-click deletion of confirmed documents.
 
 **02 · Understand — cited rules & deterministic math**
 Enter and confirm household size. RealDoor annualizes income **deterministically in code**,
@@ -60,16 +69,21 @@ Enter and confirm household size. RealDoor annualizes income **deterministically
 double-counting), then shows the **official published MTSP limit** for your household size
 with its **source and effective date**. It **never labels you eligible** — the comparison is
 always paired with a deflection to human review, and it **abstains** when an input is
-missing. A rules Q&A over a **9-rule corpus** (income definition, set-aside, income
-averaging, assets, full-time-student rule, 140% rule, freshness…) retrieves answers **with
-citations** using token-overlap matching, **refuses** decision questions, and says *"I won't
-guess"* when out of scope.
+missing. A published **maximum-gross-rent table** (30% of the imputed income limitation,
+1.5 persons per bedroom) is computed deterministically from the same frozen limits. A rules
+Q&A over an **11-rule corpus** (income definition, set-aside, income averaging with a worked
+example, the 60%-column derivation, rent limits, assets, full-time-student rule, 140% rule,
+freshness sourced to HUD Handbook 4350.3 ¶ 5-13.B…) retrieves answers **with citations**
+using token-overlap matching, **refuses** decision questions, and says *"I won't guess"*
+when out of scope.
 
 **03 · Prepare — renter-controlled packet**
-The gold checklist flags each item **present / missing / expired** (a pay stub older than
-120 days is flagged expired). Items you physically hold (ID, SSN card, application form,
-asset statement) can be **marked present** so the packet can actually be completed. You
-choose what to include, add a note, then **preview, download (.md/.json), and delete**.
+A **readiness progress bar** shows how many required items are ready and which need
+attention. The gold checklist flags each item **present / missing / expired** (a pay stub
+older than 120 days is flagged expired, per HUD Handbook 4350.3 ¶ 5-13.B). Items you
+physically hold (ID, SSN card, application form, asset statement) can be **marked present**
+so the packet can actually be completed. You choose what to include, add a note, then
+**preview, print (→ Save as PDF), download (.md/.json), and delete**.
 **RealDoor never sends the packet anywhere.**
 
 ---
@@ -78,11 +92,11 @@ choose what to include, add a note, then **preview, download (.md/.json), and de
 
 | # | Demo step | Where |
 |---|-----------|-------|
-| 1 | Upload a synthetic document, show extracted evidence | Profile → *Pay stub (current)* → **Extract fields** (evidence boxes + YTD-calibrated confidence) |
+| 1 | Upload a synthetic document, show extracted evidence | Profile → upload `samples/paystub_fresh.pdf` (or click *Pay stub (current)*) → **Extract fields** (evidence boxes + cross-check-calibrated confidence) |
 | 2 | Correct one field, show downstream values update | Profile → edit *Current gross pay* on the **confirmed** doc → Understand recomputes income & limit |
 | 3 | Ask a rules question, show the authoritative citation | Understand → *"What is the income limit for my household?"* |
 | 4 | Show the deterministic calculation and its effective date | Understand → income breakdown + limit table (`effective 2026-05-01`) |
-| 5 | Identify a missing/expired item, then export the packet | Load *Pay stub (stale)* → Prepare shows **expired** → **Download packet** |
+| 5 | Identify a missing/expired item, then export the packet | Load *Pay stub (stale)* → Prepare shows **expired** + progress bar → **Print / Save as PDF** or **Download packet** |
 | 6 | Run the refusal, prompt-injection, and session-deletion tests | Trust & tests → the three buttons (each reports PASS live) |
 
 ## Non-negotiable controls — demonstrated live (not just claimed)
@@ -92,19 +106,20 @@ choose what to include, add a note, then **preview, download (.md/.json), and de
 | **No decisioning** | Never approves/denies/scores/ranks. `compareIncome` cannot emit a verdict (a test asserts the object never contains `eligible`/`approved`). Decision questions are deflected. Verified by the Refusal test. |
 | **No hidden proxies** | Only the published field allowlist is used (shown in-app under *"Data we use & why"*). A denylist of sensitive fields is published and never extracted or inferred. |
 | **Consent & correction** | Extraction gated by consent; every field editable **before and after** confirmation; the audit log records consent, actions, and rule versions — **never raw document contents or derived financials** (a UI test asserts pay values, names, and computed income never appear in the log). |
-| **Privacy & security** | In-browser, ephemeral by default (no server, no training on uploads). Export + one-click session deletion. Optional **AES-GCM encrypted** local snapshot (Web Crypto, PBKDF2 key). |
-| **Untrusted input** | Document text is treated as data. Embedded instructions are **surfaced and ignored** — verified by the Injection test (real fields still extract; confidence stays set by the YTD cross-check, **not** forced to 100%). |
-| **Accessibility (WCAG 2.2 AA)** | Semantic landmarks/headings, keyboard-complete, visible focus, labeled inputs with validated errors, `aria-live` status, status by **text + icon + color** (never color alone), reduced-motion, light/dark. |
+| **Consent & correction** (withdrawal) | Consent is **withdrawable**: unchecking it blocks new extraction and offers one-click deletion of already-confirmed documents (tested). |
+| **Privacy & security** | In-browser, ephemeral by default (no server, no training on uploads). A strict **CSP** (`default-src 'self'`, header + meta) blocks all external requests; scripts are external files (`script-src 'self'`); the dev server adds `nosniff`, referrer, and frame-ancestors protections and blocks path traversal. Export + one-click session deletion. Optional **AES-GCM encrypted** local snapshot (Web Crypto, PBKDF2 key, `type="password"` input). |
+| **Untrusted input** | Document text — including PDF text — is treated as data. Embedded instructions are **surfaced and ignored** — verified by the Injection test and a PDF-injection test (real fields still extract; confidence stays set by the YTD cross-check, **not** forced to 100%). |
+| **Accessibility (WCAG 2.2 AA)** | Single `h1` + semantic landmarks/headings, keyboard-complete, visible focus, labeled inputs with `aria-describedby`-linked help/errors and `aria-invalid`, `role="log"`/`role="search"`/`role="progressbar"` where they belong, `aria-live` status, status by **text + icon + color** (never color alone), reduced-motion, mobile layout, light/dark with AA contrast. |
 
 ## Judging-rubric mapping
 
 | Criterion | Weight | Where to look |
 |-----------|-------:|---------------|
-| Profile accuracy | 25% | Evidence boxes, **YTD-reconciled** confidence, variant-label extraction, editable-after-confirm, *needs review* abstention |
-| Rules and math | 25% | Cited 9-rule Q&A + deterministic, **de-duplicated** annualization + **official** MTSP limit with effective date |
-| Safety and privacy | 20% | Trust & tests panel: refusal, injection, deletion; allowlist/denylist; audit log (no derived financials); encrypted save |
-| Accessibility | 15% | Keyboard journey, focus, `aria-live`, validated errors, non-color status |
-| End-to-end usefulness | 15% | Full Profile → Understand → Prepare flow → completable (self-attest), editable, renter-controlled packet |
+| Profile accuracy | 25% | **Measured: 29/29 gold fields correct** (`npm run test:accuracy`); PDF + text ingestion; evidence boxes; **YTD- and benefit-reconciled** confidence with an in-app legend; variant-label extraction; editable-after-confirm; *needs review* abstention |
+| Rules and math | 25% | Cited 11-rule Q&A with worked examples + deterministic, **de-duplicated** annualization + **official** MTSP limit and **rent-limit table** with effective dates; freshness window sourced to HUD 4350.3 ¶ 5-13.B |
+| Safety and privacy | 20% | Trust & tests panel: refusal, injection (text + PDF), deletion; consent withdrawal; strict CSP; allowlist/denylist; audit log (no derived financials); encrypted save |
+| Accessibility | 15% | Single h1, keyboard journey, focus, `aria-live`, `aria-describedby`/`aria-invalid` errors, log/search/progressbar roles, non-color status, mobile layout |
+| End-to-end usefulness | 15% | Onboarding → full Profile → Understand → Prepare flow → progress bar → completable (self-attest), editable, renter-controlled packet incl. **Print / Save as PDF** |
 
 ## Data provenance
 
@@ -124,13 +139,19 @@ the 50% column rounded to the nearest $10, per the HUD MTSP method.
 
 ```
 RealDoor/
-  index.html            # the whole app (self-contained UI; loads engine.js + styles.css)
+  index.html            # UI shell (strict CSP; loads engine.js + app.js + styles.css)
+  app.js                # UI layer (render + events; onboarding, progress, print, PDF upload)
   engine.js             # pure logic + frozen data (no DOM) — unit-tested, node-runnable
-  styles.css            # accessible styles (WCAG 2.2 AA, light/dark)
+  styles.css            # accessible styles (WCAG 2.2 AA, light/dark, mobile, print)
+  vendor/               # same-origin pdf.js (Apache-2.0) + Inter font (OFL) — no CDN
   data/                 # canonical copies of the frozen corpus (rules, checklist, Q&A)
-  samples/              # synthetic pay stubs (incl. alt-format), benefit letter, injection doc
-  test/engine.test.js   # 52 dependency-free logic tests
-  test/ui.smoke.js      # 27 jsdom end-to-end flow tests
+  samples/              # synthetic docs as .txt AND .pdf (incl. alt-format + injection)
+  scripts/serve.js      # dev server with CSP/security headers + traversal guard
+  scripts/make-sample-pdfs.js  # regenerates the sample PDFs from the .txt sources
+  test/engine.test.js   # 68 dependency-free logic tests
+  test/accuracy.test.js # gold-field harness -> "29/29 fields correct, 0 abstained"
+  test/pdf.test.js      # 9 tests: PDFs through real pdf.js into the engine
+  test/ui.smoke.js      # 46 jsdom end-to-end flow tests
   ARCHITECTURE.md · RISK.md · LICENSE-MANIFEST.md
 ```
 

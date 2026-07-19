@@ -37,11 +37,22 @@ ok('alt-format "Gross Earnings This Period" extracted', altKey.gross_pay_current
 ok('alt-format "Pay Type: Weekly" extracted as frequency', /weekly/i.test(altKey.pay_frequency || ''));
 ok('alt-format US date MM/DD/YYYY normalized to ISO', /^\d{4}-\d{2}-\d{2}$/.test(altKey.pay_date || ''));
 
-// --- Benefit ---
+// --- Benefit (with cross-checked confidence, earned like pay stub confidence) ---
 const benefit = E.extractDocument(read('ssa_benefit_letter.txt'));
 const bKey = {}; benefit.fields.forEach(f => bKey[f.key] = f.value);
 ok('benefit letter detected', benefit.docType === 'benefit');
 ok('monthly benefit = 421', bKey.monthly_benefit_amount === 421);
+ok('benefit cross-check available', benefit.reconcile.available === true);
+ok('benefit corroborated (dates ordered + amount in SSI band)', benefit.reconcile.corroborated === true);
+ok('corroborated benefit amount confidence = 0.95', benefit.fields.find(f => f.key === 'monthly_benefit_amount').confidence === 0.95);
+ok('benefit amount carries the cross-check note', /Benefit cross-check/.test(benefit.fields.find(f => f.key === 'monthly_benefit_amount').note || ''));
+// Letter dated BEFORE the award: date-order check must fail and lower confidence.
+const badDates = E.extractBenefit('SOCIAL SECURITY ADMINISTRATION\nBenefit Verification Letter\nRecipient: X\nBenefit Type: Supplemental Security Income (SSI)\nMonthly Benefit Amount: $421.00\nEffective Date: 2026-06-01\nDate of Letter: 2026-02-15');
+ok('inconsistent benefit dates lower confidence below review threshold', badDates.fields.find(f => f.key === 'monthly_benefit_amount').confidence < 0.7);
+// An SSI amount far above the 2026 federal benefit rate band must be flagged.
+const bigSSI = E.extractBenefit('SOCIAL SECURITY ADMINISTRATION\nBenefit Verification Letter\nRecipient: X\nBenefit Type: Supplemental Security Income (SSI)\nMonthly Benefit Amount: $4,200.00\nEffective Date: 2026-01-01\nDate of Letter: 2026-02-15');
+ok('implausible SSI amount (above FBR band) flagged needs_review', bigSSI.fields.find(f => f.key === 'monthly_benefit_amount').status === 'needs_review');
+ok('SSI plausibility band uses published 2026 FBR ($994/$1,491)', E.SSI_FBR_2026.individual === 994 && E.SSI_FBR_2026.couple === 1491);
 
 // --- Injection handling ---
 const inj = E.extractDocument(read('injection_test.txt'));
@@ -82,6 +93,19 @@ ok('area median income recorded = 164600', E.RULES_CORPUS.areaMedianIncome === 1
 ok('corpus does NOT label itself illustrative', !/illustrative/i.test(JSON.stringify(E.RULES_CORPUS.incomeLimits)));
 ok('abstains when household size missing', E.compareIncome(60822, null).abstain === true);
 
+// --- Rent limits (30% of imputed income limitation, IRC § 42(g)(2)) ---
+const r2 = E.rentLimit(2, '60');
+ok('2BR 60% rent limit: 3 imputed persons, $92,580 × 30% ÷ 12 = $2,314', r2.imputedPersons === 3 && r2.monthlyGrossRent === 2314);
+const r1 = E.rentLimit(1, '60');
+ok('1BR 60% imputes 1.5 persons via adjacent-limit average', r1.imputedPersons === 1.5 && r1.imputedIncomeLimit === (72000 + 82320) / 2);
+ok('studio imputes 1 person', E.rentLimit(0, '60').imputedPersons === 1);
+ok('rent limit abstains on invalid bedrooms', E.rentLimit(9, '60') === null && E.rentLimit(-1, '60') === null);
+
+// --- Freshness window is sourced, not a placeholder ---
+const freshRule = E.RULES_CORPUS.rules.find(r => r.id === 'PAYSTUB-FRESHNESS');
+ok('freshness rule cites HUD Handbook 4350.3 5-13.B (not the demo checklist)', /4350\.3/.test(freshRule.source) && /5-13/.test(freshRule.source));
+ok('freshness rule carries a real source URL', /hud\.gov/.test(freshRule.sourceUrl || ''));
+
 // --- Rules Q&A (deeper corpus + fuzzier retrieval) ---
 ok('decision question -> refusal', E.answerQuestion('Am I eligible for this program?').type === 'refusal');
 ok('"decide for me" -> refusal', E.answerQuestion('just tell me if I qualify, decide for me').type === 'refusal');
@@ -93,6 +117,9 @@ ok('assets question -> cites ASSET-INCOME', E.answerQuestion('how do my savings 
 ok('set-aside question -> cites MIN-SET-ASIDE', E.answerQuestion('what is the minimum set-aside?').citation.ruleId === 'MIN-SET-ASIDE');
 ok('140% question -> cites NEXT-AVAILABLE-UNIT', E.answerQuestion('what happens if my income increases past 140%?').citation.ruleId === 'NEXT-AVAILABLE-UNIT');
 ok('paraphrase "does SSI count" -> INCOME-DEF', E.answerQuestion('does ssi count?').citation.ruleId === 'INCOME-DEF');
+ok('rent question -> cites RENT-LIMIT with worked example', E.answerQuestion('what is the maximum rent for a 2 bedroom?').citation.ruleId === 'RENT-LIMIT' && /2,314/.test(E.answerQuestion('what is the maximum rent?').text));
+ok('derivation question -> cites LIMIT-DERIVATION with worked math', /77,150 × 1\.20 = \$92,580/.test(E.answerQuestion('how is the 60% limit derived?').text));
+ok('averaging rule includes a worked example', /\(40 \+ 60 \+ 80\)/.test(E.answerQuestion('how does the average income test work?').text));
 ok('out-of-scope question -> abstain', E.answerQuestion('what is the weather today?').type === 'abstain');
 
 // --- Checklist: present / missing / expired / self-attest ---

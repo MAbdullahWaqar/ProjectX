@@ -3,36 +3,49 @@
 ## One-paragraph summary
 RealDoor is a **fully client-side** copilot. A pure-logic module (`engine.js`, no DOM)
 holds the frozen program corpus and every deterministic operation; a thin UI layer
-(`index.html` + `styles.css`) renders the three-stage journey and wires user actions to the
-engine. There is **no backend and no network call at runtime**, which is what makes the
-privacy guarantees trivially true: uploaded documents never leave the browser, are never
-persisted unless the renter explicitly asks (encrypted), and are never used for training.
+(`index.html` + `app.js` + `styles.css`) renders the three-stage journey and wires user
+actions to the engine. PDF ingestion uses a **vendored** copy of pdf.js served same-origin.
+There is **no backend and no network call at runtime** — and that property is now
+**enforced**, not just claimed, by a strict Content-Security-Policy (`default-src 'self'`,
+sent as both a response header and a `<meta>` tag; scripts are external files so
+`script-src 'self'` holds). Uploaded documents never leave the browser, are never persisted
+unless the renter explicitly asks (encrypted), and are never used for training.
 
 ## Layers
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ UI (index.html + styles.css)                                 │
+│ UI (index.html + app.js + styles.css)                        │
 │  Profile · Understand · Prepare · Trust/Tests                │
-│  consent gate · evidence boxes · calibrated-confidence       │
-│  meters · editable (pre + post confirm) · provenance panel · │
-│  self-attest checklist · aria-live · keyboard nav            │
+│  onboarding · consent gate (withdrawable) · evidence boxes · │
+│  calibrated-confidence meters · editable (pre+post confirm) ·│
+│  provenance & rent panels · readiness progress ·             │
+│  self-attest checklist · print/PDF export · aria-live        │
+├──────────────────────────────────────────────────────────────┤
+│ vendor/pdfjs (same-origin pdf.js) — PDF → text lines → the   │
+│  identical regex path as pasted text (data, never code)      │
 └───────────────▲───────────────────────────┬─────────────────┘
                 │ calls (pure functions)     │ renders
 ┌───────────────┴───────────────────────────▼─────────────────┐
 │ engine.js  (no DOM — unit-tested, node-runnable)             │
 │  extraction (variant labels) · injection detection ·         │
-│  reconcileIncome (YTD cross-check) · dedupeSources ·         │
-│  annualize · limit lookup · compareIncome (never a verdict) ·│
-│  Q&A retrieval (token overlap) · checklist eval · packet     │
+│  reconcileIncome (YTD cross-check) · reconcileBenefit        │
+│  (date sanity + SSI FBR band) · dedupeSources · annualize ·  │
+│  limit lookup · rentLimit (30% of imputed limitation) ·      │
+│  compareIncome (never a verdict) · Q&A retrieval (token      │
+│  overlap) · checklist eval · packet                          │
 ├──────────────────────────────────────────────────────────────┤
 │ Frozen data (embedded + mirrored in /data/*.json)            │
-│  RULES_CORPUS (real HUD FY2026 MTSP) · FIELD_ALLOWLIST ·     │
-│  FIELD_DENYLIST · GOLD_CHECKLIST · QA_CORPUS (9 rules)        │
+│  RULES_CORPUS (real HUD FY2026 MTSP, 11 cited rules) ·       │
+│  SSI_FBR_2026 · FIELD_ALLOWLIST · FIELD_DENYLIST ·           │
+│  GOLD_CHECKLIST · QA_CORPUS                                  │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 ## Data flow (Profile → Understand → Prepare)
-1. **Ingest.** Renter loads a sample / uploads a `.txt` / pastes text; held **in memory only**.
+1. **Ingest.** Renter loads a sample / uploads a `.pdf` or `.txt` / pastes text; held
+   **in memory only**. PDFs are converted to text lines in-browser by the vendored pdf.js
+   (`pdfItemsToText` rebuilds line structure), then flow through the **identical** extraction
+   path as pasted text — a PDF is data, never code.
 2. **Detect & extract.** `detectDocType` routes to an extractor built on **label-variant**
    patterns (e.g. `Gross Pay | Gross Earnings This Period | Current Earnings | Total Gross`),
    and a US-date normalizer, so it survives documents it didn't author. Each field captures
@@ -40,7 +53,12 @@ persisted unless the renter explicitly asks (encrypted), and are never used for 
 3. **Calibrate confidence.** `reconcileIncome` performs the **YTD cross-check**:
    `impliedPeriods = YTD ÷ current gross` must be a clean whole number *and* plausible for the
    pay frequency by the pay date. Corroborated → 0.97; not reconciled → 0.55 (*needs review*).
-   Confidence is therefore a **computed claim**, not a constant.
+   `reconcileBenefit` earns benefit-letter confidence the same way: the letter date must not
+   precede the award effective date, and an SSI amount must sit within the published **2026
+   SSI federal benefit rate** band ($994 individual / $1,491 couple + state-supplement
+   headroom). Corroborated → 0.95; failed → 0.55. Confidence is therefore a **computed
+   claim**, not a constant — and a gold harness (`test/accuracy.test.js`) measures field-level
+   accuracy across every sample (currently 29/29 correct, 0 abstained).
 4. **Confirm & correct.** Fields render editable with evidence + confidence. Editing sets a
    field to renter-confirmed. Confirmed documents **stay editable** in the Profile stage, and
    any edit re-derives income, limit, and checklist.
@@ -52,12 +70,15 @@ persisted unless the renter explicitly asks (encrypted), and are never used for 
    household size, and the difference — **always** with a `decisionDeflection`. It has no
    `eligible` field by construction, and **abstains** when income or household size is missing.
 7. **Explain.** `answerQuestion` (a) refuses decision questions, (b) retrieves an answer +
-   citation by **token-overlap scoring** across a 9-rule corpus (fuzzier than exact
-   substrings, with a minimum-score threshold), or (c) abstains.
+   citation by **token-overlap scoring** across an 11-rule corpus with worked examples
+   (Average Income Test, 60%-column derivation, maximum gross rent via `rentLimit`), or
+   (c) abstains. Every rule cites an external authority, including the 120-day freshness
+   window (HUD Handbook 4350.3 ¶ 5-13.B).
 8. **Prepare.** `evaluateChecklist` marks each gold item present/missing/expired using
    confirmed documents, the as-of date, and any **self-attested** items the renter marked as
-   held. `buildPacket` + `renderPacketMarkdown` produce a downloadable, renter-edited packet.
-   **No send path exists in the code.**
+   held; a **readiness progress bar** summarizes required items. `buildPacket` +
+   `renderPacketMarkdown` produce a renter-edited packet as Markdown, JSON, or a **printable
+   sheet** (browser print → Save as PDF). **No send path exists in the code.**
 
 ## Key design decisions & trade-offs
 - **Real, provenanced rule data.** Income limits are the official HUD FY2026 MTSP figures for
@@ -77,19 +98,30 @@ persisted unless the renter explicitly asks (encrypted), and are never used for 
   Optional persistence is AES-GCM with a PBKDF2-derived key.
 
 ## Accessibility approach
-Semantic HTML (`header`/`nav`/`main`/`section` with labelled headings), a skip link, visible
-`:focus-visible` outlines that are never removed, every input `<label>`ed, **validated** date
-input with errors via `role="alert"`, an `aria-live` status region for completion
-announcements, status conveyed by **icon + text + color** (never color alone), reduced-motion
-handling, and light/dark themes that both meet contrast. An automated DOM pass verifies these;
+Semantic HTML with a single `h1` and correct heading hierarchy, a skip link, visible
+`:focus-visible` outlines that are never removed, every input `<label>`ed with help and
+errors linked via `aria-describedby` and invalid state via `aria-invalid`, errors via
+`role="alert"`, an `aria-live` status region for completion announcements, `role="log"` on
+the chat and audit logs, `role="search"` on the Q&A form, `role="progressbar"` on packet
+readiness, `aria-label`ed stage buttons, status conveyed by **icon + text + color** (never
+color alone), reduced-motion handling, a 768px mobile layout, and light/dark themes that
+both meet AA contrast. The jsdom pass asserts the h1, roles, and `aria-invalid` behavior;
 a screen-reader spot-check is recommended before production (see RISK.md).
 
 ## Testing
-`test/engine.test.js` (52 checks, zero deps) covers variant extraction, YTD reconciliation,
-de-duplication, real MTSP values, refusal/abstain, the 9-rule corpus, freshness, and packet
-output. `test/ui.smoke.js` (27 checks, jsdom) drives the full journey including
-correct-after-confirm, self-attest, and audit-log privacy.
+- `test/engine.test.js` (68 checks, zero deps): variant extraction, YTD + benefit
+  reconciliation, de-duplication, real MTSP values, rent limits, refusal/abstain, the
+  11-rule corpus, sourced freshness, and packet output.
+- `test/accuracy.test.js`: gold-field harness that prints a **measured accuracy number**
+  across every sample (currently 29/29 fields correct, 0 abstained).
+- `test/pdf.test.js` (9 checks): sample PDFs through real pdf.js text extraction into the
+  same engine path — including the injection PDF.
+- `test/ui.smoke.js` (46 checks, jsdom): the full journey including onboarding, consent
+  withdrawal, correct-after-confirm, progress, print sheet, self-attest, a11y roles, and
+  audit-log privacy.
+- `npm run test:all` runs all four suites.
 
 ## Out of scope (noted, not gaps)
-Property discovery ("Discover" stretch), multi-program coverage, PDF/OCR ingestion, and any
-real (non-synthetic) renter data.
+Property discovery ("Discover" stretch), multi-program coverage, OCR of image-only scans
+(text-layer PDFs are supported), per-member household income attribution, and any real
+(non-synthetic) renter data.
