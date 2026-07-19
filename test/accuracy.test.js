@@ -54,25 +54,76 @@ const GOLD = {
 };
 
 let correct = 0, abstained = 0, wrong = 0, total = 0;
+let stressCorrect = 0, stressAbstained = 0, stressWrong = 0, stressTotal = 0;
 const failures = [];
 
-Object.keys(GOLD).forEach(function (file) {
-  const text = fs.readFileSync(path.join(__dirname, '..', 'samples', file), 'utf8');
+function evalDoc(file, basePath, goldSet, isStress) {
+  const wantGold = goldSet[file];
+  if (wantGold === null) {
+    const text = fs.readFileSync(path.join(basePath, file), 'utf8');
+    const result = E.extractDocument(text);
+    isStress ? stressTotal++ : total++;
+    if (result.docType === 'unknown') {
+      isStress ? stressCorrect++ : correct++;
+    } else {
+      isStress ? stressWrong++ : wrong++;
+      failures.push(file + ' — expected unknown document, got ' + result.docType);
+      console.log('  WRONG    ' + file + ' — expected unknown, got ' + result.docType);
+    }
+    return;
+  }
+
+  const text = fs.readFileSync(path.join(basePath, file), 'utf8');
   const result = E.extractDocument(text);
   const byKey = {}; result.fields.forEach(f => byKey[f.key] = f.value);
-  const gold = GOLD[file];
-  Object.keys(gold).forEach(function (key) {
-    total++;
-    const got = byKey[key], want = gold[key];
-    if (got == null) { abstained++; console.log('  ABSTAIN  ' + file + ' :: ' + key); return; }
-    const match = want && want.re ? want.re.test(String(got).trim())
-      : (typeof want === 'number' ? Number(got) === want : String(got).trim() === String(want));
-    if (match) { correct++; }
-    else { wrong++; failures.push(file + ' :: ' + key + ' — expected ' + (want.re || want) + ', got ' + JSON.stringify(got)); console.log('  WRONG    ' + file + ' :: ' + key + ' — expected ' + (want.re || want) + ', got ' + JSON.stringify(got)); }
+  Object.keys(wantGold).forEach(function (key) {
+    isStress ? stressTotal++ : total++;
+    const got = byKey[key], want = wantGold[key];
+    if (want === null && got === null) {
+       isStress ? stressCorrect++ : correct++;
+       return;
+    }
+    if (got == null) { 
+        isStress ? stressAbstained++ : abstained++; 
+        console.log('  ABSTAIN  ' + file + ' :: ' + key); 
+        return; 
+    }
+    if (want === null && got != null) {
+       isStress ? stressWrong++ : wrong++;
+       failures.push(file + ' :: ' + key + ' — expected abstain (null), got ' + JSON.stringify(got));
+       console.log('  WRONG    ' + file + ' :: ' + key + ' — expected abstain, got ' + JSON.stringify(got));
+       return;
+    }
+    let match = false;
+    if (want && want.re) {
+       const regex = typeof want.re === 'string' ? new RegExp(want.re, 'i') : want.re;
+       match = regex.test(String(got).trim());
+    } else {
+       match = (typeof want === 'number' ? Number(got) === want : String(got).trim() === String(want));
+    }
+    if (match) { isStress ? stressCorrect++ : correct++; }
+    else { 
+        isStress ? stressWrong++ : wrong++; 
+        failures.push(file + ' :: ' + key + ' — expected ' + (want.re || want) + ', got ' + JSON.stringify(got)); 
+        console.log('  WRONG    ' + file + ' :: ' + key + ' — expected ' + (want.re || want) + ', got ' + JSON.stringify(got)); 
+    }
   });
-});
+}
 
-console.log('\nField-level accuracy on the sample corpus: ' + correct + '/' + total + ' fields correct, '
-  + abstained + ' abstained, ' + wrong + ' wrong.');
-if (wrong > 0) { console.log('Failures:\n  ' + failures.join('\n  ')); }
-process.exit(wrong === 0 ? 0 : 1);
+Object.keys(GOLD).forEach(f => evalDoc(f, path.join(__dirname, '..', 'samples'), GOLD, false));
+
+const stressGold = require('./stress-gold.json');
+Object.keys(stressGold).forEach(f => evalDoc(f, path.join(__dirname, '..', 'samples', 'stress'), stressGold, true));
+
+const allCorrect = correct + stressCorrect;
+const allTotal = total + stressTotal;
+const allAbstained = abstained + stressAbstained;
+const allWrong = wrong + stressWrong;
+
+console.log('\n--- Field-level Accuracy ---');
+console.log('Base corpus:   ' + correct + '/' + total + ' fields correct, ' + abstained + ' abstained, ' + wrong + ' wrong.');
+console.log('Stress corpus: ' + stressCorrect + '/' + stressTotal + ' fields correct, ' + stressAbstained + ' abstained, ' + stressWrong + ' wrong.');
+console.log('Combined:      ' + allCorrect + '/' + allTotal + ' fields correct, ' + allAbstained + ' abstained, ' + allWrong + ' wrong.');
+
+if (allWrong > 0) { console.log('Failures:\n  ' + failures.join('\n  ')); }
+process.exit(allWrong === 0 ? 0 : 1);

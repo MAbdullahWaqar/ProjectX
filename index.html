@@ -43,6 +43,7 @@
       <button type="button" data-stage="profile" aria-current="true" aria-label="Stage 1, Profile: human-confirmed extraction"><span class="step-num">01</span><span class="step-title">Profile</span><span class="step-sub">Human-confirmed extraction</span></button>
       <button type="button" data-stage="understand" aria-label="Stage 2, Understand: cited rules and deterministic math"><span class="step-num">02</span><span class="step-title">Understand</span><span class="step-sub">Cited rules &amp; deterministic math</span></button>
       <button type="button" data-stage="prepare" aria-label="Stage 3, Prepare: renter-controlled packet"><span class="step-num">03</span><span class="step-title">Prepare</span><span class="step-sub">Renter-controlled packet</span></button>
+      <button type="button" data-stage="discover" aria-label="Stage 4, Discover: regional housing map"><span class="step-num">04</span><span class="step-title">Discover</span><span class="step-sub">Regional housing directory</span></button>
       <button type="button" data-stage="trust" aria-label="Trust and tests: safety, audit and demo"><span class="step-num">★</span><span class="step-title">Trust &amp; tests</span><span class="step-sub">Safety, audit, demo</span></button>
     </nav>
 
@@ -189,6 +190,19 @@
       </div>
 
       <div id="packetPreview"></div>
+    </section>
+
+    <!-- STAGE 4: DISCOVER -->
+    <section class="stage" id="stage-discover" aria-labelledby="h-discover" hidden>
+      <h2 id="h-discover" tabindex="-1">04 · Discover — regional housing directory</h2>
+      <p class="muted">A directory of participating LIHTC properties in the Boston-Cambridge-Quincy area. <strong>Note: This list is purely informational.</strong> RealDoor does not filter, rank, or score these properties based on your profile, nor can it predict availability or eligibility. Contact properties directly for current waitlists.</p>
+      
+      <div class="card">
+        <h3>Property List</h3>
+        <div id="propertyList">
+          <p class="muted">Loading property list...</p>
+        </div>
+      </div>
     </section>
 
     <!-- TRUST & TESTS -->

@@ -1,0 +1,11 @@
+****************************************
+*                                      *
+*    SOCIAL SECURITY ADMINISTRATION    *
+*        BENEFIT VERIFICATION          *
+*                                      *
+****************************************
+Recipient: John Smith
+Benefit Type: SSI
+Monthly Benefit Amount: $994.00
+Effective Date: 2026-01-01
+Date of Letter: 2026-02-15

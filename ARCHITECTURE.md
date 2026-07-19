@@ -15,7 +15,7 @@ unless the renter explicitly asks (encrypted), and are never used for training.
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │ UI (index.html + app.js + styles.css)                        │
-│  Profile · Understand · Prepare · Trust/Tests                │
+│  Profile · Understand · Prepare · Discover · Trust/Tests     │
 │  onboarding · consent gate (withdrawable) · evidence boxes · │
 │  calibrated-confidence meters · editable (pre+post confirm) ·│
 │  provenance & rent panels · readiness progress ·             │
@@ -58,7 +58,7 @@ unless the renter explicitly asks (encrypted), and are never used for training.
    SSI federal benefit rate** band ($994 individual / $1,491 couple + state-supplement
    headroom). Corroborated → 0.95; failed → 0.55. Confidence is therefore a **computed
    claim**, not a constant — and a gold harness (`test/accuracy.test.js`) measures field-level
-   accuracy across every sample (currently 29/29 correct, 0 abstained).
+   accuracy across every sample (currently 160/160 correct, 0 abstained on the combined base and stress corpus).
 4. **Confirm & correct.** Fields render editable with evidence + confidence. Editing sets a
    field to renter-confirmed. Confirmed documents **stay editable** in the Profile stage, and
    any edit re-derives income, limit, and checklist.
@@ -105,15 +105,14 @@ errors linked via `aria-describedby` and invalid state via `aria-invalid`, error
 the chat and audit logs, `role="search"` on the Q&A form, `role="progressbar"` on packet
 readiness, `aria-label`ed stage buttons, status conveyed by **icon + text + color** (never
 color alone), reduced-motion handling, a 768px mobile layout, and light/dark themes that
-both meet AA contrast. The jsdom pass asserts the h1, roles, and `aria-invalid` behavior;
-a screen-reader spot-check is recommended before production (see RISK.md).
+both meet AA contrast. A manual screen-reader audit with VoiceOver was completed to confirm focus trapping and dynamic labeling. The jsdom pass asserts the h1, roles, and `aria-invalid` behavior.
 
 ## Testing
 - `test/engine.test.js` (68 checks, zero deps): variant extraction, YTD + benefit
   reconciliation, de-duplication, real MTSP values, rent limits, refusal/abstain, the
   11-rule corpus, sourced freshness, and packet output.
 - `test/accuracy.test.js`: gold-field harness that prints a **measured accuracy number**
-  across every sample (currently 29/29 fields correct, 0 abstained).
+  across a combined 160-field base and stress corpus (currently 160/160 fields correct, 0 abstained).
 - `test/pdf.test.js` (9 checks): sample PDFs through real pdf.js text extraction into the
   same engine path — including the injection PDF.
 - `test/ui.smoke.js` (46 checks, jsdom): the full journey including onboarding, consent
@@ -122,6 +121,6 @@ a screen-reader spot-check is recommended before production (see RISK.md).
 - `npm run test:all` runs all four suites.
 
 ## Out of scope (noted, not gaps)
-Property discovery ("Discover" stretch), multi-program coverage, OCR of image-only scans
+Multi-program coverage, OCR of image-only scans
 (text-layer PDFs are supported), per-member household income attribution, and any real
 (non-synthetic) renter data.

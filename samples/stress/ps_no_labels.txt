@@ -1,0 +1,7 @@
+Acme Corp
+John Smith
+Biweekly
+2026-07-15
+
+Total: $2,187.50
+YTD: $30,625.00

@@ -1,0 +1,299 @@
+{
+  "ps_tabular.txt": {
+    "employer_name": {
+      "re": "Northeast Freight"
+    },
+    "employee_name": {
+      "re": "John Smith"
+    },
+    "pay_frequency": {
+      "re": "Bi-weekly"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": 2187.5,
+    "gross_pay_ytd": 30625
+  },
+  "ps_no_labels.txt": {
+    "employer_name": {
+      "re": "Acme Corp"
+    },
+    "employee_name": {
+      "re": "John Smith"
+    },
+    "pay_frequency": {
+      "re": "Biweekly"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": 2187.5,
+    "gross_pay_ytd": 30625
+  },
+  "ps_multiline_employer.txt": {
+    "employer_name": {
+      "re": "Northeast Freight"
+    },
+    "employee_name": {
+      "re": "John Smith"
+    },
+    "pay_frequency": {
+      "re": "Biweekly"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": 2187.5,
+    "gross_pay_ytd": 30625
+  },
+  "ps_extra_whitespace.txt": {
+    "employer_name": {
+      "re": "Northeast Freight"
+    },
+    "employee_name": {
+      "re": "John Smith"
+    },
+    "pay_frequency": {
+      "re": "Biweekly"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": 2187.5,
+    "gross_pay_ytd": 30625
+  },
+  "ps_comma_separated.txt": {
+    "employer_name": {
+      "re": "Northeast Freight"
+    },
+    "employee_name": {
+      "re": "John Smith"
+    },
+    "pay_frequency": {
+      "re": "Biweekly"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": 2187.5,
+    "gross_pay_ytd": 30625
+  },
+  "ps_reversed_date.txt": {
+    "employer_name": {
+      "re": "Northeast Freight"
+    },
+    "employee_name": {
+      "re": "John Smith"
+    },
+    "pay_frequency": {
+      "re": "Biweekly"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": 2187.5,
+    "gross_pay_ytd": 30625
+  },
+  "ps_lowercase.txt": {
+    "employer_name": {
+      "re": "northeast freight"
+    },
+    "employee_name": {
+      "re": "john smith"
+    },
+    "pay_frequency": {
+      "re": "biweekly"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": 2187.5,
+    "gross_pay_ytd": 30625
+  },
+  "ps_abbreviated.txt": {
+    "employer_name": {
+      "re": "Northeast Freight"
+    },
+    "employee_name": {
+      "re": "John Smith"
+    },
+    "pay_frequency": {
+      "re": "BW"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": 2187.5,
+    "gross_pay_ytd": 30625
+  },
+  "ps_net_only.txt": {
+    "employer_name": {
+      "re": "Northeast Freight"
+    },
+    "employee_name": {
+      "re": "John Smith"
+    },
+    "pay_frequency": {
+      "re": "Biweekly"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": null,
+    "gross_pay_ytd": null
+  },
+  "ps_missing_ytd.txt": {
+    "employer_name": {
+      "re": "Northeast Freight"
+    },
+    "employee_name": {
+      "re": "John Smith"
+    },
+    "pay_frequency": {
+      "re": "Biweekly"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": 2187.5,
+    "gross_pay_ytd": null
+  },
+  "ps_zero_gross.txt": {
+    "employer_name": {
+      "re": "Northeast Freight"
+    },
+    "employee_name": {
+      "re": "John Smith"
+    },
+    "pay_frequency": {
+      "re": "Biweekly"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": 0,
+    "gross_pay_ytd": 30625
+  },
+  "ps_high_income.txt": {
+    "employer_name": {
+      "re": "Northeast Freight"
+    },
+    "employee_name": {
+      "re": "John Smith"
+    },
+    "pay_frequency": {
+      "re": "Biweekly"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": 15000,
+    "gross_pay_ytd": 210000
+  },
+  "ps_multiple_jobs.txt": {
+    "employer_name": {
+      "re": "Northeast Freight"
+    },
+    "employee_name": {
+      "re": "John Smith"
+    },
+    "pay_frequency": {
+      "re": "Biweekly"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": 2187.5,
+    "gross_pay_ytd": 30625
+  },
+  "ps_unicode_dollar.txt": {
+    "employer_name": {
+      "re": "Northeast Freight"
+    },
+    "employee_name": {
+      "re": "John Smith"
+    },
+    "pay_frequency": {
+      "re": "Biweekly"
+    },
+    "pay_date": "2026-07-15",
+    "gross_pay_current": 2187.5,
+    "gross_pay_ytd": 30625
+  },
+  "ps_image_only.txt": null,
+  "bl_ssdi.txt": {
+    "recipient_name": {
+      "re": "John Smith"
+    },
+    "benefit_type": {
+      "re": "Social Security Disability Insurance"
+    },
+    "monthly_benefit_amount": 1250,
+    "award_effective_date": "2026-02-01",
+    "letter_date": "2026-03-01"
+  },
+  "bl_va_pension.txt": {
+    "recipient_name": {
+      "re": "John Smith"
+    },
+    "benefit_type": {
+      "re": "Veterans Pension"
+    },
+    "monthly_benefit_amount": 850,
+    "award_effective_date": "2026-01-01",
+    "letter_date": "2026-02-15"
+  },
+  "bl_partial_ssi.txt": {
+    "recipient_name": {
+      "re": "John Smith"
+    },
+    "benefit_type": {
+      "re": "Supplemental Security Income"
+    },
+    "monthly_benefit_amount": 284,
+    "award_effective_date": "2026-01-01",
+    "letter_date": "2026-02-15"
+  },
+  "bl_no_dates.txt": {
+    "recipient_name": {
+      "re": "John Smith"
+    },
+    "benefit_type": {
+      "re": "SSI"
+    },
+    "monthly_benefit_amount": 994,
+    "award_effective_date": null,
+    "letter_date": null
+  },
+  "bl_multiple_benefits.txt": {
+    "recipient_name": {
+      "re": "John Smith"
+    },
+    "benefit_type": {
+      "re": "Social Security Retirement"
+    },
+    "monthly_benefit_amount": 1200,
+    "award_effective_date": "2026-01-01",
+    "letter_date": "2026-02-15"
+  },
+  "bl_noisy_header.txt": {
+    "recipient_name": {
+      "re": "John Smith"
+    },
+    "benefit_type": {
+      "re": "SSI"
+    },
+    "monthly_benefit_amount": 994,
+    "award_effective_date": "2026-01-01",
+    "letter_date": "2026-02-15"
+  },
+  "bl_reversed_dates.txt": {
+    "recipient_name": {
+      "re": "John Smith"
+    },
+    "benefit_type": {
+      "re": "SSI"
+    },
+    "monthly_benefit_amount": 994,
+    "award_effective_date": "2026-06-01",
+    "letter_date": "2026-02-15"
+  },
+  "bl_non_benefit.txt": null,
+  "bl_very_old.txt": {
+    "recipient_name": {
+      "re": "John Smith"
+    },
+    "benefit_type": {
+      "re": "SSI"
+    },
+    "monthly_benefit_amount": 914,
+    "award_effective_date": "2023-01-01",
+    "letter_date": "2023-02-15"
+  },
+  "bl_foreign_currency.txt": {
+    "recipient_name": {
+      "re": "John Smith"
+    },
+    "benefit_type": {
+      "re": "SSI"
+    },
+    "monthly_benefit_amount": null,
+    "award_effective_date": "2026-01-01",
+    "letter_date": "2026-02-15"
+  }
+}

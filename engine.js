@@ -172,7 +172,8 @@
   // ---------------------------------------------------------------------------
   function money(str) {
     if (str == null) return null;
-    const n = Number(String(str).replace(/[$,\s]/g, ''));
+    if (/[€£¥]/.test(String(str))) return null;
+    const n = Number(String(str).replace(/[$,\s"\uff04]/g, ''));
     return isFinite(n) ? n : null;
   }
   function pad2(s) { s = String(s); return s.length < 2 ? '0' + s : s; }
@@ -180,8 +181,12 @@
     if (s == null) return null;
     s = String(s).trim();
     let m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/); if (m) return s;
-    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if (m) return m[3] + '-' + pad2(m[1]) + '-' + pad2(m[2]);
-    m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/); if (m) return m[3] + '-' + pad2(m[1]) + '-' + pad2(m[2]);
+    m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/); 
+    if (m) {
+      let p1 = parseInt(m[1], 10), p2 = parseInt(m[2], 10);
+      if (p1 > 12 && p2 <= 12) { const t = p1; p1 = p2; p2 = t; }
+      return m[3] + '-' + pad2(p1) + '-' + pad2(p2);
+    }
     return s;
   }
   function lineAround(text, index) {
@@ -228,26 +233,42 @@
   // Extraction (Profile stage) — robust to label variants + computed confidence
   // ---------------------------------------------------------------------------
   const RE = {
-    employee: [/(?:Employee Name|Employee)\s*:\s*(.+)/i, /^Name\s*:\s*(.+)/im],
-    frequency: [/(?:Pay Frequency|Pay Type|Frequency|Payroll Frequency)\s*:\s*(.+)/i],
-    payDate: [/(?:Pay Date|Check Date|Pay\/Check Date)\s*:\s*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4})/i, /Pay Period[^\n]*\bto\s*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4})/i],
-    grossCur: [/(?:Current Gross Pay|Gross Pay This Period|Gross Earnings This Period|Current Earnings|Gross Wages|Total Gross|Current Gross|Gross Pay|Gross Earnings)\s*:?\s*\$?([\d,]+\.\d{2})/i],
-    grossYtd: [/(?:YTD Gross Pay|Gross Pay YTD|Year[- ]to[- ]Date Gross|YTD Gross Earnings|Gross Earnings YTD|YTD Earnings|YTD Gross)\s*:?\s*\$?([\d,]+\.\d{2})/i],
-    recipient: [/(?:Recipient|Beneficiary)\s*:\s*(.+)/i, /^Name\s*:\s*(.+)/im],
-    benefitType: [/(?:Benefit Type|Type of Benefit|Program)\s*:\s*(.+)/i],
-    benefitAmt: [/(?:Monthly Benefit Amount|Monthly Benefit|Monthly Payment|Monthly Amount|Benefit Amount)\s*:?\s*\$?([\d,]+\.\d{2})/i],
-    awardDate: [/(?:Effective Date|Award Date|Date of Entitlement)\s*:\s*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4})/i],
-    letterDate: [/(?:Date of Letter|Letter Date|Date Issued)\s*:\s*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}\/[0-9]{1,2}\/[0-9]{4})/i]
+    employee: [/(?:Employee Name|\bEmployee\b|\bEmp\b)[\s:|,\-]*(.+)/i, /^Name[\s:|,\-]*(.+)/im, /^([A-Z][a-z]+ [A-Z][a-z]+)$/m],
+    frequency: [/(?:Pay Frequency|Pay Type|Frequency|Payroll Frequency|Freq)[\s:|,\-]*(.+)/i, /^(Bi-?weekly|Weekly|Semi-?monthly|Monthly|Annually)$/im],
+    payDate: [/(?:Pay Date|Check Date|Pay\/Check Date|Date)[\s:|,\-]*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{4})/i, /Pay Period[^\n]*\bto\s*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{4})/i, /^([0-9]{4}-[0-9]{2}-[0-9]{2})$/m],
+    grossCur: [
+      /(?:Current Gross Pay|Gross Pay This Period|Gross Earnings This Period|Current Earnings|Gross Wages|Total Gross|Current Gross|Gross Pay|Gross Earnings|Cur Gross|Total)[\s:|,\-]*(?:(?!\bnet\b)[a-z\s|]*[\s:|,\-]+)*("?\s*[$\uff04€£¥]?\s*[\d,]+\.\d{2}\s*"?)/i
+    ],
+    grossYtd: [
+      /(?:YTD Gross Pay|Gross Pay YTD|Year[- ]to[- ]Date Gross|YTD Gross Earnings|Gross Earnings YTD|YTD Earnings|YTD Gross|\bYTD\b(?!\s+net))[\s:|,\-]*(?:(?!\bnet\b)[a-z\s|]*[\s:|,\-]+)*("?\s*[$\uff04€£¥]?\s*[\d,]+\.\d{2}\s*"?)/i,
+      /Total(?:[\s:|,\-]+)"?\s*[$\uff04€£¥]?\s*[\d,]+\.\d{2}\s*"?(?:[\s:|,\-]+)("?\s*[$\uff04€£¥]?\s*[\d,]+\.\d{2}\s*"?)/i
+    ],
+    recipient: [/(?:Recipient|Beneficiary)[\s:|,\-]*(.+)/i, /^Name[\s:|,\-]*(.+)/im],
+    benefitType: [/(?:Benefit Type|Type of Benefit|Program)[\s:|,\-]*(.+)/i, /^Supplemental Security Income(?:\s*\(SSI\))?$/im],
+    benefitAmt: [/(?:Monthly Benefit Amount|Monthly Benefit|Monthly Payment|Monthly Amount|Benefit Amount)[\s:|,\-]*("?\s*[$\uff04€£¥]?\s*[\d,]+\.\d{2}\s*"?)/i],
+    awardDate: [/(?:Effective Date|Award Date|Date of Entitlement)[\s:|,\-]*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{4})/i],
+    letterDate: [/(?:Date of Letter|Letter Date|Date Issued)[\s:|,\-]*([0-9]{4}-[0-9]{2}-[0-9]{2}|[0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{4})/i]
   };
 
   function detectDocType(text) {
-    if (/earnings statement|gross (pay|earnings|wages)|pay (frequency|stub|type)|payroll/i.test(text)) return 'paystub';
-    if (/social security administration|benefit (type|verification|amount|letter)|award letter|beneficiary|supplemental security/i.test(text)) return 'benefit';
+    if (!/[a-z]{3,}/i.test(text)) return 'unknown';
+    if (/earnings statement|gross (pay|earnings|wages)|pay (frequency|stub|type)|payroll|\bytd\b/i.test(text)) return 'paystub';
+    if (/social security administration.*(benefit|award|payment)|benefit (type|verification|amount|letter)|award letter|beneficiary|supplemental security/is.test(text)) return 'benefit';
     return 'unknown';
   }
   function guessEmployer(text) {
     const lines = String(text).split(/\r?\n/).map(function (l) { return l.trim(); });
     for (const l of lines) { if (!l) continue; if (/statement|pay|earnings|employee|:/i.test(l)) continue; return { value: l, evidence: lineAround(text, text.indexOf(l)) }; }
+    return null;
+  }
+  function guessEmployee(text, empHit) {
+    const lines = String(text).split(/\r?\n/).map(l => l.trim());
+    const empStr = empHit ? empHit.value : '';
+    for (const l of lines) {
+      if (/^([A-Z][a-z]+ [A-Z][a-z]+)$/.test(l) && l !== empStr && !/LLC|Inc|Corp/i.test(l)) {
+        return { value: l, evidence: lineAround(text, text.indexOf(l)) };
+      }
+    }
     return null;
   }
 
@@ -322,7 +343,8 @@
 
   function extractPaystub(text) {
     const emp = match(text, /Employer\s*:\s*(.+)/i) || guessEmployer(text);
-    const employee = first.apply(null, [text].concat(RE.employee));
+    const empRe = [/(?:Employee Name|\bEmployee\b|\bEmp\b)[\s:|,\-]*(.+)/i, /^Name[\s:|,\-]*(.+)/im];
+    const employee = first.apply(null, [text].concat(empRe)) || guessEmployee(text, emp);
     const freq = first.apply(null, [text].concat(RE.frequency));
     let payDateHit = first.apply(null, [text].concat(RE.payDate));
     if (payDateHit) payDateHit = { value: normalizeDate(payDateHit.value), evidence: payDateHit.evidence };

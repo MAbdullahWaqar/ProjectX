@@ -1,0 +1,11 @@
+SOCIAL SECURITY ADMINISTRATION
+Recipient: John Smith
+Letter Date: 2026-02-15
+
+Benefit Type: Social Security Retirement
+Effective Date: 2026-01-01
+Monthly Benefit Amount: $1,200.00
+
+Benefit Type: SSI
+Effective Date: 2026-01-01
+Monthly Benefit Amount: $294.00

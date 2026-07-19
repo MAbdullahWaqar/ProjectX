@@ -1,0 +1,6 @@
+Northeast Freight LLC
+Employee: John Smith
+Pay Frequency: Biweekly
+Pay Date: 2026-07-15
+Gross Pay: ＄2,187.50
+YTD Gross: ＄30,625.00

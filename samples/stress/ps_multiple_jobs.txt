@@ -1,0 +1,14 @@
+Northeast Freight LLC
+Employee: John Smith
+Pay Frequency: Biweekly
+Pay Date: 2026-07-15
+Gross Pay: $2,187.50
+YTD Gross: $30,625.00
+
+--- Second Job ---
+Burger King
+Employee: John Smith
+Pay Frequency: Weekly
+Pay Date: 2026-07-16
+Gross Pay: $300.00
+YTD Gross: $8,400.00

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "MA-001",
+    "name": "Beacon Hill Affordable Apartments",
+    "address": "123 Tremont St, Boston, MA 02108",
+    "units": 45,
+    "targetPop": "General",
+    "contact": "(617) 555-0101"
+  },
+  {
+    "id": "MA-002",
+    "name": "Roxbury Crossing Heights",
+    "address": "450 Columbus Ave, Boston, MA 02118",
+    "units": 120,
+    "targetPop": "Family",
+    "contact": "(617) 555-0202"
+  },
+  {
+    "id": "MA-003",
+    "name": "Cambridge Senior Living",
+    "address": "88 Mass Ave, Cambridge, MA 02139",
+    "units": 60,
+    "targetPop": "Seniors (62+)",
+    "contact": "(617) 555-0303"
+  },
+  {
+    "id": "MA-004",
+    "name": "Quincy Commuter Lofts",
+    "address": "100 Hancock St, Quincy, MA 02171",
+    "units": 85,
+    "targetPop": "General",
+    "contact": "(617) 555-0404"
+  },
+  {
+    "id": "MA-005",
+    "name": "Dorchester Transit Village",
+    "address": "250 Dorchester Ave, Boston, MA 02127",
+    "units": 200,
+    "targetPop": "General",
+    "contact": "(617) 555-0505"
+  }
+]

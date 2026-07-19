@@ -1,0 +1,6 @@
+SOCIAL SECURITY ADMINISTRATION
+Recipient: John Smith
+Benefit Type: SSI
+Monthly Benefit Amount: $914.00
+Effective Date: 2023-01-01
+Date of Letter: 2023-02-15

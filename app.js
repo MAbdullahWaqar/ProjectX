@@ -59,16 +59,25 @@
     $('obTitle').focus();
     $('obStart').addEventListener('click', function () { dismissOnboarding(true); });
     $('obSkip').addEventListener('click', function () { dismissOnboarding(false); });
-    ob.addEventListener('keydown', function (e) { if (e.key === 'Escape') dismissOnboarding(false); });
+    ob.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { dismissOnboarding(false); return; }
+      if (e.key === 'Tab') {
+        var focusable = ob.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        var first = focusable[0], last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
   }
 
   var stageBtns = document.querySelectorAll('nav.stages button');
   function showStage(name) {
-    ['profile', 'understand', 'prepare', 'trust'].forEach(function (s) { $('stage-' + s).hidden = (s !== name); });
+    ['profile', 'understand', 'prepare', 'discover', 'trust'].forEach(function (s) { $('stage-' + s).hidden = (s !== name); });
     stageBtns.forEach(function (b) { b.setAttribute('aria-current', String(b.dataset.stage === name)); });
     var h = $('stage-' + name).querySelector('h2'); if (h) h.focus();
     if (name === 'understand') { renderProvenance(); renderIncome(); renderLimit(); renderRents(); }
     if (name === 'prepare') renderChecklist();
+    if (name === 'discover') renderProperties();
   }
   stageBtns.forEach(function (b) { b.addEventListener('click', function () { showStage(b.dataset.stage); }); });
 
@@ -103,6 +112,39 @@
     rows.forEach(function (r) { tbl.appendChild(el('tr', {}, [el('th', { text: r[0] }), el('td', { text: r[1] })])); });
     body.appendChild(tbl);
     body.appendChild(el('p', { class: 'small' }, [el('a', { href: il.publisherUrl, target: '_blank', rel: 'noopener', text: 'Published limits table (MassHousing 2026)' }), ' · ', el('a', { href: il.sourceUrl, target: '_blank', rel: 'noopener', text: 'HUD MTSP dataset' })]));
+  }
+
+  // --- Stage 4: Discover (Stretch Goal) ---
+  var propertiesLoaded = false;
+  function renderProperties() {
+    if (propertiesLoaded) return;
+    var box = $('propertyList');
+    fetch('data/lihtc-properties.json')
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        box.innerHTML = '';
+        var table = el('table', { class: 'limits' });
+        table.appendChild(el('thead', {}, [
+          el('tr', {}, [el('th', { text: 'Name' }), el('th', { text: 'Address' }), el('th', { text: 'Units' }), el('th', { text: 'Target Population' }), el('th', { text: 'Contact' })])
+        ]));
+        var tb = el('tbody');
+        data.forEach(function (p) {
+          tb.appendChild(el('tr', {}, [
+            el('td', {}, [el('strong', { text: p.name })]),
+            el('td', { text: p.address }),
+            el('td', { text: String(p.units) }),
+            el('td', { text: p.targetPop }),
+            el('td', { text: p.contact })
+          ]));
+        });
+        table.appendChild(tb);
+        box.appendChild(table);
+        propertiesLoaded = true;
+      })
+      .catch(function(err) {
+        box.innerHTML = '';
+        box.appendChild(el('p', { class: 'err', text: 'Failed to load property list: ' + err.message }));
+      });
   }
 
   function renderRents() {
@@ -249,7 +291,7 @@
       if (f.value != null) row.appendChild(confidenceMeter(f.confidence));
       if (f.note) row.appendChild(el('p', { class: 'small muted', text: f.note }));
       var inId = 'fld_' + f.key;
-      row.appendChild(el('label', { for: inId, class: 'small', text: 'Value (editable)' }));
+      row.appendChild(el('label', { for: inId, class: 'small visually-hidden', text: fieldLabel(result.docType, f.key) + ' value (editable)' }));
       var input = el('input', { type: 'text', id: inId, value: f.value == null ? '' : String(f.value) });
       input.addEventListener('change', function () { f.value = input.value; f.confidence = 1; f.status = 'ok'; logAction('field_corrected', { field: f.key }); announce(fieldLabel(result.docType, f.key) + ' updated.'); });
       row.appendChild(input); box.appendChild(row);
@@ -282,7 +324,7 @@
       allow.forEach(function (a) {
         var wrap = el('div', { class: 'edit-field' });
         var inId = 'edit_' + d.id + '_' + a.key;
-        wrap.appendChild(el('label', { for: inId, class: 'small', text: a.label }));
+        wrap.appendChild(el('label', { for: inId, class: 'small', text: a.label + ' (editable)' }));
         var input = el('input', { type: 'text', id: inId, value: d.fieldsByKey[a.key] == null ? '' : String(d.fieldsByKey[a.key]) });
         input.addEventListener('change', function () {
           var v = input.value.trim();

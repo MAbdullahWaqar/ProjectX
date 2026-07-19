@@ -1,0 +1,9 @@
+Northeast Freight LLC
+Employee: John Smith
+Date: 2026-07-15
+Frequency: Bi-weekly
+
+Description   | Hours | Rate  | Current   | YTD
+Regular Pay   | 80.0  | 25.00 | $2,000.00 | $28,000.00
+Overtime      | 5.0   | 37.50 |   $187.50 |  $2,625.00
+Total:        |       |       | $2,187.50 | $30,625.00
