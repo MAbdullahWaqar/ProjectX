@@ -90,7 +90,7 @@ ok('60% AMI limit for hh=3 = official $92,580', cmp.limits[0].value === 92580);
 ok('50% AMI limit for hh=3 = official $77,150', cmp.limits[1].value === 77150);
 ok('limit effective date = 2026-05-01', cmp.effectiveDate === '2026-05-01');
 ok('area median income recorded = 164600', E.RULES_CORPUS.areaMedianIncome === 164600);
-ok('corpus does NOT label itself illustrative', !/illustrative/i.test(JSON.stringify(E.RULES_CORPUS.incomeLimits)));
+ok('corpus does NOT label itself simulated', !/simulated/i.test(JSON.stringify(E.RULES_CORPUS.incomeLimits)));
 ok('abstains when household size missing', E.compareIncome(60822, null).abstain === true);
 
 // --- Rent limits (30% of imputed income limitation, IRC § 42(g)(2)) ---
@@ -101,7 +101,7 @@ ok('1BR 60% imputes 1.5 persons via adjacent-limit average', r1.imputedPersons =
 ok('studio imputes 1 person', E.rentLimit(0, '60').imputedPersons === 1);
 ok('rent limit abstains on invalid bedrooms', E.rentLimit(9, '60') === null && E.rentLimit(-1, '60') === null);
 
-// --- Freshness window is sourced, not a placeholder ---
+// --- Freshness window is sourced, not a dummy ---
 const freshRule = E.RULES_CORPUS.rules.find(r => r.id === 'PAYSTUB-FRESHNESS');
 ok('freshness rule cites HUD Handbook 4350.3 5-13.B (not the demo checklist)', /4350\.3/.test(freshRule.source) && /5-13/.test(freshRule.source));
 ok('freshness rule carries a real source URL', /hud\.gov/.test(freshRule.sourceUrl || ''));
