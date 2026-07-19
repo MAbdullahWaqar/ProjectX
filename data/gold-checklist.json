@@ -1,0 +1,11 @@
+{
+  "_note": "Gold checklist for a LIHTC application packet. freshnessDays = max age of a dated document before it is flagged expired. selfAttestable = the renter can mark it present (an item they physically hold, like an ID) even without uploading a parseable document. Canonical copy; engine.js embeds an identical copy.",
+  "items": [
+    { "id": "application_form", "label": "Completed program application form", "category": "Application", "required": true, "freshnessDays": null, "satisfiedBy": ["application_form"], "selfAttestable": true },
+    { "id": "photo_id", "label": "Government-issued photo ID", "category": "Identity", "required": true, "freshnessDays": null, "satisfiedBy": ["photo_id"], "selfAttestable": true },
+    { "id": "ssn_verification", "label": "Social Security number verification", "category": "Identity", "required": true, "freshnessDays": null, "satisfiedBy": ["ssn_verification"], "selfAttestable": true },
+    { "id": "income_verification", "label": "Income verification (recent pay stubs)", "category": "Income", "required": true, "freshnessDays": 120, "satisfiedBy": ["paystub"], "selfAttestable": false },
+    { "id": "benefit_verification", "label": "Benefit award / verification letter (if applicable)", "category": "Income", "required": false, "freshnessDays": 365, "satisfiedBy": ["benefit"], "selfAttestable": false },
+    { "id": "asset_statement", "label": "Asset / bank statement (last 2 months)", "category": "Assets", "required": true, "freshnessDays": 60, "satisfiedBy": ["asset_statement"], "selfAttestable": true }
+  ]
+}

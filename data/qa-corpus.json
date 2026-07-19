@@ -1,0 +1,19 @@
+{
+  "_note": "Intent -> rule-id mapping for the rules Q&A. Retrieval scores by token overlap plus a phrase-substring bonus (fuzzier than exact substring), so paraphrases still match. Answers are retrieved from rules-corpus.json with a citation, never generated. Decision questions are refused; unmatched questions (score below threshold) abstain. Canonical copy; engine.js embeds an identical copy.",
+  "scoring": "For each intent: +3 if any keyword phrase is a substring of the question; +1 per intent keyword-token present in the question (stopwords removed). Best intent wins if its score >= 2, else abstain.",
+  "intents": [
+    { "id": "income_definition", "ruleId": "INCOME-DEF", "keywords": ["what counts as income", "gross income", "annual income", "does ssi count", "does social security count", "which income"] },
+    { "id": "income_limit", "ruleId": "MTSP-LIMIT", "keywords": ["income limit", "maximum income", "how much can i make", "how much can i earn", "area median income", "ami"] },
+    { "id": "set_aside", "ruleId": "MIN-SET-ASIDE", "keywords": ["set aside", "set-aside", "minimum set aside", "20 50", "40 60"] },
+    { "id": "income_averaging", "ruleId": "INCOME-AVERAGING", "keywords": ["income averaging", "average income test", "averaging"] },
+    { "id": "asset_income", "ruleId": "ASSET-INCOME", "keywords": ["assets", "asset income", "savings", "bank account", "imputed income", "passbook"] },
+    { "id": "student_rule", "ruleId": "STUDENT-RULE", "keywords": ["student", "full time student", "full-time student", "college", "students"] },
+    { "id": "next_available_unit", "ruleId": "NEXT-AVAILABLE-UNIT", "keywords": ["140", "next available unit", "income increases", "income goes up", "over income"] },
+    { "id": "paystub_freshness", "ruleId": "PAYSTUB-FRESHNESS", "keywords": ["how recent", "how old", "how new", "expire", "expired", "stale", "pay stub", "paystub", "out of date"] },
+    { "id": "program_info", "ruleId": "PROGRAM", "keywords": ["what program", "which program", "lihtc", "what is this", "what rules"] },
+    { "id": "documents_needed", "ruleId": null, "keywords": ["what documents", "what do i need", "checklist", "required documents", "what paperwork", "which documents"] }
+  ],
+  "decisionPatterns": [
+    "am i eligible", "do i qualify", "decide for me", "just tell me if", "make the decision", "will i get approved", "approve me"
+  ]
+}

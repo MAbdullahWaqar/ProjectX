@@ -1,0 +1,34 @@
+{
+  "version": "2026.2",
+  "frozenOn": "2026-07-19",
+  "program": "Low-Income Housing Tax Credit (LIHTC)",
+  "ruleYear": 2026,
+  "metro": "Boston-Cambridge-Quincy, MA-NH HUD Metro FMR Area",
+  "areaMedianIncome": 164600,
+  "_note": "Canonical copy of the frozen rule corpus. engine.js embeds an identical copy so the app runs from file:// without a fetch. Income limits are the OFFICIAL HUD FY2026 MTSP figures for the Boston-Cambridge-Quincy, MA-NH HMFA, transcribed from the MassHousing 2026 HUD Income & Rent Limits table (effective 2026-05-01).",
+  "incomeLimits": {
+    "source": "HUD FY2026 Multifamily Tax Subsidy Projects (MTSP) Income Limits — Boston-Cambridge-Quincy, MA-NH HMFA (via MassHousing 2026 HUD Income & Rent Limits)",
+    "sourceUrl": "https://www.huduser.gov/portal/datasets/mtsp.html",
+    "publisherUrl": "https://www.masshousing.com/-/media/Files/Developers/Income-Rent-Limits/2026/2026-HUD-Income-Rent-Limits.pdf",
+    "effectiveDate": "2026-05-01",
+    "provenance": "Official published figures. 60% column = 120% of the 50% column, rounded to the nearest $10 (HUD MTSP method).",
+    "householdSizeIndex": "index 0 = 1 person ... index 7 = 8 persons",
+    "byPercent": {
+      "30": [36000, 41150, 46300, 51400, 55550, 59650, 63750, 67850],
+      "50": [60000, 68600, 77150, 85700, 92600, 99450, 106300, 113150],
+      "60": [72000, 82320, 92580, 102840, 111120, 119340, 127560, 135780],
+      "80": [96000, 109700, 123400, 137100, 148100, 159050, 170050, 181000]
+    }
+  },
+  "rules": [
+    { "id": "PROGRAM", "title": "Program & rule year", "source": "HUD FY2026 MTSP Income Limits", "effectiveDate": "2026-05-01" },
+    { "id": "MTSP-LIMIT", "title": "Household income limit", "source": "HUD FY2026 MTSP Income Limits", "effectiveDate": "2026-05-01" },
+    { "id": "MIN-SET-ASIDE", "title": "Minimum set-aside", "source": "Internal Revenue Code § 42(g)(1)", "effectiveDate": "2018-03-23" },
+    { "id": "INCOME-AVERAGING", "title": "Average Income Test", "source": "Internal Revenue Code § 42(g)(1)(C)", "effectiveDate": "2018-03-23" },
+    { "id": "INCOME-DEF", "title": "What counts as annual income", "source": "HUD Handbook 4350.3, Chapter 5 (Determining Income)", "effectiveDate": "2013-06-01" },
+    { "id": "ASSET-INCOME", "title": "Income from assets", "source": "HUD Handbook 4350.3, Chapter 5 (Assets)", "effectiveDate": "2013-06-01" },
+    { "id": "STUDENT-RULE", "title": "Full-time student household rule", "source": "Internal Revenue Code § 42(i)(3)(D)", "effectiveDate": "1986-10-22" },
+    { "id": "NEXT-AVAILABLE-UNIT", "title": "The 140% Next Available Unit rule", "source": "Internal Revenue Code § 42(g)(2)(D)(ii)", "effectiveDate": "1989-12-19" },
+    { "id": "PAYSTUB-FRESHNESS", "title": "How recent income documents must be", "source": "RealDoor demo gold checklist (freshness policy)", "effectiveDate": "2026-01-01" }
+  ]
+}
