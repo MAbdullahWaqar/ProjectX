@@ -138,9 +138,35 @@ setTimeout(() => {
     document.querySelector('nav.stages [data-stage="understand"]').dispatchEvent(new dom.window.Event('click'));
     ok('post-confirmation edit updates income (3000*26 + 421*12 = 83,052)', /83,052/.test(document.getElementById('incomeCalc').textContent));
 
-    // Trust tests
-    document.querySelector('nav.stages [data-stage="trust"]').dispatchEvent(new dom.window.Event('click'));
-    click('testRefusal');
+    // Discover stretch goal tests
+    // Mock fetch for the public API before clicking
+    dom.window.fetch = function(url) {
+      if (url === 'data/lihtc-properties.json') {
+        return Promise.resolve({
+          json: () => Promise.resolve([
+            { name: "Mock Place", address: "123 Main", units: 50, targetPop: "Family", contact: "555-0000" },
+            { name: "Senior Towers", address: "456 Oak", units: 100, targetPop: "Seniors (62+)", contact: "555-1111" }
+          ])
+        });
+      }
+      return Promise.reject(new Error('unmocked fetch'));
+    };
+    document.querySelector('nav.stages [data-stage="discover"]').dispatchEvent(new dom.window.Event('click'));
+    
+    // Use a small setTimeout trick for the promise resolution
+    setTimeout(() => {
+      try {
+        const discoverHtml = document.getElementById('propertyList').innerHTML;
+        ok('Discover table shows Unknown for availability', /Unknown/.test(discoverHtml) && !/Available/.test(discoverHtml));
+        
+        // Filter test
+        setVal('discoverPop', 'Family'); change('discoverPop');
+        const filteredHtml = document.getElementById('propertyList').innerHTML;
+        ok('Discover filters reduce list', /Mock Place/.test(filteredHtml) && !/Senior Towers/.test(filteredHtml));
+        
+        // Trust tests
+        document.querySelector('nav.stages [data-stage="trust"]').dispatchEvent(new dom.window.Event('click'));
+        click('testRefusal');
     ok('refusal test PASS', /PASS/.test(document.getElementById('testOutput').textContent) && /Refusal test/.test(document.getElementById('testOutput').textContent));
     click('testInjection');
     ok('injection test PASS', /PASS/.test(document.getElementById('testOutput').textContent) && /injection/i.test(document.getElementById('testOutput').textContent));
@@ -155,6 +181,11 @@ setTimeout(() => {
 
     console.log('\n' + pass + ' passed, ' + fail + ' failed');
     process.exit(fail === 0 ? 0 : 1);
+      } catch (innerE) {
+        console.error('THREW in inner:', innerE && innerE.stack || innerE);
+        process.exit(2);
+      }
+    }, 100);
   } catch (e) {
     console.error('THREW:', e && e.stack || e);
     process.exit(2);

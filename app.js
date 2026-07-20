@@ -115,35 +115,72 @@
   }
 
   // --- Stage 4: Discover (Stretch Goal) ---
-  var propertiesLoaded = false;
-  function renderProperties() {
-    if (propertiesLoaded) return;
+  var propertiesCache = null;
+  
+  var PublicDataAPI = {
+    fetchProperties: function() {
+      if (propertiesCache) return Promise.resolve(propertiesCache);
+      return fetch('data/lihtc-properties.json').then(function(res) { return res.json(); }).then(function(data) {
+        propertiesCache = data;
+        return data;
+      });
+    }
+  };
+
+  function applyDiscoverFilters() {
+    if (!propertiesCache) return;
+    var searchStr = ($('discoverSearch').value || '').toLowerCase().trim();
+    var popStr = $('discoverPop').value;
+    
+    var filtered = propertiesCache.filter(function(p) {
+      var matchSearch = !searchStr || p.name.toLowerCase().indexOf(searchStr) !== -1 || p.address.toLowerCase().indexOf(searchStr) !== -1;
+      var matchPop = popStr === 'Any' || p.targetPop === popStr;
+      return matchSearch && matchPop;
+    });
+
+    logAction('Applied discovery filters', { targetPop: popStr, searchLength: searchStr.length });
+    
+    renderPropertyList(filtered);
+  }
+
+  function renderPropertyList(data) {
     var box = $('propertyList');
-    fetch('data/lihtc-properties.json')
-      .then(function(res) { return res.json(); })
+    box.innerHTML = '';
+    var table = el('table', { class: 'limits' });
+    table.appendChild(el('thead', {}, [
+      el('tr', {}, [el('th', { text: 'Name' }), el('th', { text: 'Address' }), el('th', { text: 'Units' }), el('th', { text: 'Target Population' }), el('th', { text: 'Contact' }), el('th', { text: 'Availability' })])
+    ]));
+    var tb = el('tbody');
+    data.forEach(function (p) {
+      tb.appendChild(el('tr', {}, [
+        el('td', {}, [el('strong', { text: p.name })]),
+        el('td', { text: p.address }),
+        el('td', { text: String(p.units) }),
+        el('td', { text: p.targetPop }),
+        el('td', { text: p.contact }),
+        el('td', {}, [el('em', { text: 'Unknown', class: 'muted' })])
+      ]));
+    });
+    table.appendChild(tb);
+    box.appendChild(table);
+    
+    var statusText = data.length === 1 ? '1 property found.' : data.length + ' properties found.';
+    $('discoverStatus').textContent = statusText;
+  }
+
+  function renderProperties() {
+    if (propertiesCache) return;
+    $('discoverStatus').textContent = 'Loading properties from Public API...';
+    PublicDataAPI.fetchProperties()
       .then(function(data) {
-        box.innerHTML = '';
-        var table = el('table', { class: 'limits' });
-        table.appendChild(el('thead', {}, [
-          el('tr', {}, [el('th', { text: 'Name' }), el('th', { text: 'Address' }), el('th', { text: 'Units' }), el('th', { text: 'Target Population' }), el('th', { text: 'Contact' })])
-        ]));
-        var tb = el('tbody');
-        data.forEach(function (p) {
-          tb.appendChild(el('tr', {}, [
-            el('td', {}, [el('strong', { text: p.name })]),
-            el('td', { text: p.address }),
-            el('td', { text: String(p.units) }),
-            el('td', { text: p.targetPop }),
-            el('td', { text: p.contact })
-          ]));
-        });
-        table.appendChild(tb);
-        box.appendChild(table);
-        propertiesLoaded = true;
+        renderPropertyList(data);
+        $('discoverSearch').addEventListener('input', applyDiscoverFilters);
+        $('discoverPop').addEventListener('change', applyDiscoverFilters);
       })
       .catch(function(err) {
-        box.innerHTML = '';
-        box.appendChild(el('p', { class: 'err', text: 'Failed to load property list: ' + err.message }));
+        $('propertyList').innerHTML = '';
+        $('propertyList').appendChild(el('p', { class: 'err', text: 'Failed to load property list: ' + err.message }));
+        $('discoverStatus').textContent = 'Error loading properties.';
       });
   }
 

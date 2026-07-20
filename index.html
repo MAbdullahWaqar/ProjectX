@@ -195,12 +195,32 @@
     <!-- STAGE 4: DISCOVER -->
     <section class="stage" id="stage-discover" aria-labelledby="h-discover" hidden>
       <h2 id="h-discover" tabindex="-1">04 · Discover — regional housing directory</h2>
-      <p class="muted">A directory of participating LIHTC properties in the Boston-Cambridge-Quincy area. <strong>Note: This list is purely informational.</strong> RealDoor does not filter, rank, or score these properties based on your profile, nor can it predict availability or eligibility. Contact properties directly for current waitlists.</p>
+      <div class="callout info">
+        <strong>Source: Simulated LIHTC Public Data API.</strong> 
+        This is an unfiltered, local demonstration directory. RealDoor does not rank or score these properties based on your profile, nor can it predict acceptance. Availability is always listed as <em>Unknown</em> unless explicitly confirmed by the property. Contact properties directly for current waitlists.
+      </div>
       
       <div class="card">
-        <h3>Property List</h3>
-        <div id="propertyList">
-          <p class="muted">Loading property list...</p>
+        <h3>Property Search</h3>
+        <div class="discover-filters" style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 200px;">
+            <label for="discoverSearch">Search by Name or Address</label>
+            <input type="text" id="discoverSearch" placeholder="e.g. Boston or Heights">
+          </div>
+          <div style="flex: 1; min-width: 200px;">
+            <label for="discoverPop">Target Population</label>
+            <select id="discoverPop">
+              <option value="Any">Any</option>
+              <option value="Family">Family</option>
+              <option value="Seniors (62+)">Seniors (62+)</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+        </div>
+        <div aria-live="polite" id="discoverStatus" class="muted" style="margin-bottom: 1rem;">Loading properties...</div>
+        
+        <div id="propertyList" style="overflow-x: auto;">
+          <!-- Table injected by app.js -->
         </div>
       </div>
     </section>
