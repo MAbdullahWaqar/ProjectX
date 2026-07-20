@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'">
+  <title>RealDoor — Application-Readiness Copilot</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <div class="onboarding" id="onboarding" role="dialog" aria-modal="true" aria-labelledby="obTitle" hidden>
+    <div class="ob-card">
+      <h2 id="obTitle" tabindex="-1">👋 Welcome to RealDoor</h2>
+      <p>RealDoor helps you get <strong>application-ready</strong> for a LIHTC affordable apartment in the Boston area. It extracts, explains, and prepares — <strong>you confirm every value, and a qualified human makes every decision.</strong></p>
+      <ol class="ob-steps">
+        <li><strong>Profile</strong> — upload a synthetic pay stub or benefit letter (PDF or text). RealDoor shows the evidence behind every extracted field; you confirm or correct it.</li>
+        <li><strong>Understand</strong> — see the exact income math, the official HUD 2026 limits with citations, and ask rules questions.</li>
+        <li><strong>Prepare</strong> — check your document checklist, watch your readiness progress, and export a packet only you can share.</li>
+      </ol>
+      <p class="small muted">Everything runs in your browser. Nothing is uploaded to a server, stored without your consent, or used for training. Nothing here approves or denies anyone.</p>
+      <div class="btn-row">
+        <button class="btn primary" type="button" id="obStart">Start with a sample pay stub</button>
+        <button class="btn" type="button" id="obSkip">Explore on my own</button>
+      </div>
+    </div>
+  </div>
+
+  <header class="app">
+    <h1 class="brand">🚪 RealDoor</h1>
+    <p class="tagline">Application-readiness copilot · LIHTC · Boston-Cambridge-Quincy · rule year 2026. It extracts, explains, and prepares — <strong>you confirm, a qualified human decides.</strong></p>
+    <div class="controls">
+      <button class="btn" id="themeBtn" type="button" aria-pressed="false">Dark theme</button>
+      <button class="btn danger" id="deleteBtn" type="button">Delete session</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <div id="status" class="visually-hidden" role="status" aria-live="polite"></div>
+
+    <nav class="stages" aria-label="Application stages">
+      <button type="button" data-stage="profile" aria-current="true" aria-label="Stage 1, Profile: human-confirmed extraction"><span class="step-num">01</span><span class="step-title">Profile</span><span class="step-sub">Human-confirmed extraction</span></button>
+      <button type="button" data-stage="understand" aria-label="Stage 2, Understand: cited rules and deterministic math"><span class="step-num">02</span><span class="step-title">Understand</span><span class="step-sub">Cited rules &amp; deterministic math</span></button>
+      <button type="button" data-stage="prepare" aria-label="Stage 3, Prepare: renter-controlled packet"><span class="step-num">03</span><span class="step-title">Prepare</span><span class="step-sub">Renter-controlled packet</span></button>
+      <button type="button" data-stage="discover" aria-label="Stage 4, Discover: regional housing map"><span class="step-num">04</span><span class="step-title">Discover</span><span class="step-sub">Regional housing directory</span></button>
+      <button type="button" data-stage="trust" aria-label="Trust and tests: safety, audit and demo"><span class="step-num">★</span><span class="step-title">Trust &amp; tests</span><span class="step-sub">Safety, audit, demo</span></button>
+    </nav>
+
+    <!-- STAGE 1: PROFILE -->
+    <section class="stage" id="stage-profile" aria-labelledby="h-profile">
+      <h2 id="h-profile" tabindex="-1">01 · Profile — human-confirmed extraction</h2>
+      <p class="muted">Upload or paste a <strong>synthetic</strong> pay stub or benefit letter — PDF or plain text. RealDoor extracts only allowlisted fields, shows the exact source text behind each value and a <strong>confidence calibrated by independent cross-checks</strong>, and asks you to confirm or correct before anything is reused. Processing happens in your browser; nothing is sent to a server and nothing is used for training.</p>
+
+      <div class="card" id="consentCard">
+        <label for="consentChk" class="chk-label chk-strong">
+          <input type="checkbox" id="consentChk" class="chk">
+          <span>I understand RealDoor extracts allowlisted fields from documents I provide, processes them in my browser, never sends them to a server, and never trains on them.</span>
+        </label>
+        <p class="err" id="consentErr" role="alert" hidden>Please give consent above before extracting a document.</p>
+        <div id="consentWithdrawn"></div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <h3>Load a sample synthetic document</h3>
+          <div class="btn-row">
+            <button class="btn" type="button" data-sample="fresh">Pay stub (current)</button>
+            <button class="btn" type="button" data-sample="altformat">Pay stub (alt format)</button>
+            <button class="btn" type="button" data-sample="stale">Pay stub (stale)</button>
+            <button class="btn" type="button" data-sample="benefit">SSI benefit letter</button>
+            <button class="btn" type="button" data-sample="injection">Injection test doc</button>
+          </div>
+          <p class="field-help">Samples are also in <code>/samples</code> as <strong>.txt and .pdf</strong> for real file-upload demos. The alt-format stub uses different labels (“Gross Earnings This Period”, “Pay Type”, US date) and a different employer — confirm it alongside the current stub to see two employers counted, or alongside the stale stub to see de-duplication.</p>
+        </div>
+        <div class="col">
+          <h3>Or provide your own</h3>
+          <label for="fileInput">Upload a document (.pdf, .txt, .md, .csv, .json)</label>
+          <input type="file" id="fileInput" accept=".txt,.md,.csv,.json,.pdf,text/plain,application/pdf" aria-describedby="fileHelp">
+          <p class="field-help" id="fileHelp">PDFs are read entirely in your browser with a bundled copy of pdf.js — no network request is made.</p>
+          <label for="pasteArea" class="mt">Or paste document text</label>
+          <textarea id="pasteArea" placeholder="Paste synthetic pay stub or benefit letter text here…"></textarea>
+        </div>
+      </div>
+      <div class="mt">
+        <button class="btn primary" type="button" id="extractBtn">Extract fields</button>
+      </div>
+
+      <div id="injectionNotice"></div>
+      <div id="extractResult"></div>
+
+      <details class="card" id="confLegend">
+        <summary class="disclosure">How confidence is calibrated (it’s computed, not asserted)</summary>
+        <ul class="small">
+          <li><strong>97% / 95%</strong> — corroborated by an independent cross-check: for pay stubs, YTD ÷ current gross yields a clean, date-plausible pay-period count; for benefit letters, dates are consistent and an SSI amount sits within the published 2026 federal benefit rate band.</li>
+          <li><strong>~82–90%</strong> — extracted cleanly from a labeled line, but no cross-check applies.</li>
+          <li><strong>55% (“needs review”)</strong> — a cross-check failed; the value may be irregular, so please verify it.</li>
+          <li><strong>100%</strong> — only after <em>you</em> edit or confirm the value yourself.</li>
+        </ul>
+      </details>
+
+      <details class="card" id="allowlistDisclosure">
+        <summary class="disclosure">Data we use &amp; why (field allowlist — No Hidden Proxies)</summary>
+        <div id="allowlistBody"></div>
+      </details>
+
+      <h3>Confirmed documents <span class="small muted">(editable — corrections flow downstream)</span></h3>
+      <div id="confirmedDocs"><p class="muted">No confirmed documents yet.</p></div>
+    </section>
+
+    <!-- STAGE 2: UNDERSTAND -->
+    <section class="stage" id="stage-understand" aria-labelledby="h-understand" hidden>
+      <h2 id="h-understand" tabindex="-1">02 · Understand — cited rules &amp; deterministic math</h2>
+
+      <details class="card" id="provenanceCard">
+        <summary class="disclosure">Data provenance — which rule corpus is loaded</summary>
+        <div id="provenanceBody"></div>
+      </details>
+
+      <div class="card">
+        <div class="row">
+          <div class="col">
+            <label for="householdSize">Household size (persons)</label>
+            <input type="number" id="householdSize" min="1" max="8" step="1" inputmode="numeric" aria-describedby="hhHelp hhErr">
+            <p class="field-help" id="hhHelp">Confirmed by you. Determines which published income limit applies. Left blank, RealDoor abstains rather than guess.</p>
+            <p class="err" id="hhErr" role="alert" hidden></p>
+          </div>
+          <div class="col">
+            <label for="asOf">Application / as-of date</label>
+            <input type="text" id="asOf" value="2026-07-19" inputmode="numeric" aria-describedby="asOfHelp asOfErr">
+            <p class="field-help" id="asOfHelp">Used to check document freshness. Format YYYY-MM-DD.</p>
+            <p class="err" id="asOfErr" role="alert" hidden></p>
+          </div>
+        </div>
+      </div>
+
+      <h3>Deterministic income calculation</h3>
+      <div id="incomeCalc"><p class="muted">Confirm at least one income document in Profile to see the calculation.</p></div>
+
+      <h3>Published income limit (information only)</h3>
+      <div id="limitBox"><p class="muted">Confirm household size and income to see the published limit.</p></div>
+
+      <details class="card" id="rentCard">
+        <summary class="disclosure">Published maximum gross rents by bedroom count (information only)</summary>
+        <div id="rentBox"></div>
+      </details>
+
+      <h3>Ask about the rules</h3>
+      <p class="muted small">Answers are retrieved from the frozen rule corpus with a citation and effective date. Decision questions (“am I eligible?”) are deflected to the rule, your input, and the calculation. Out-of-scope questions get an honest “I won’t guess.”</p>
+      <div class="chatlog" id="chatlog" role="log" aria-live="polite" aria-label="Rules question and answer log"></div>
+      <form id="askForm" role="search" class="ask-row" aria-label="Ask about the program rules">
+        <div class="ask-grow">
+          <label for="askInput">Your question</label>
+          <input type="text" id="askInput" placeholder="e.g. What is the income limit for my household?" aria-describedby="askHelp">
+          <p class="visually-hidden" id="askHelp">Answers come from the frozen 2026 rule corpus with citations; decision questions are deflected.</p>
+        </div>
+        <button class="btn primary" type="submit">Ask</button>
+      </form>
+      <div class="btn-row mt">
+        <button class="btn subtle" type="button" data-ask="What is the income limit for my household?">Try: income limit</button>
+        <button class="btn subtle" type="button" data-ask="What counts as income?">Try: what counts as income</button>
+        <button class="btn subtle" type="button" data-ask="What is the maximum rent for a 2 bedroom?">Try: rent limit</button>
+        <button class="btn subtle" type="button" data-ask="Are full-time students eligible?">Try: student rule</button>
+        <button class="btn subtle" type="button" data-ask="How is the 60% limit derived?">Try: how limits are derived</button>
+        <button class="btn subtle" type="button" data-ask="How recent must my pay stub be?">Try: pay stub freshness</button>
+      </div>
+    </section>
+
+    <!-- STAGE 3: PREPARE -->
+    <section class="stage" id="stage-prepare" aria-labelledby="h-prepare" hidden>
+      <h2 id="h-prepare" tabindex="-1">03 · Prepare — renter-controlled packet</h2>
+      <p class="muted">RealDoor flags missing or expired items against the gold checklist. Items you hold yourself (ID, application form) can be marked present. You choose what to include, add a note, then preview, print, or download. <strong>RealDoor never sends your packet anywhere</strong> — only you can share it.</p>
+
+      <div id="progressBox"></div>
+
+      <h3>Document checklist</h3>
+      <ul class="checklist" id="checklist"></ul>
+
+      <div class="card">
+        <label for="renterNote">Note for your reviewer (optional)</label>
+        <textarea id="renterNote" placeholder="Anything you want the reviewer to know…" aria-describedby="noteHelp"></textarea>
+        <p class="field-help" id="noteHelp">Included in the packet exactly as written — nothing is added or removed.</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" type="button" id="previewBtn">Preview packet</button>
+        <button class="btn" type="button" id="printBtn">Print / Save as PDF</button>
+        <button class="btn" type="button" id="downloadMdBtn">Download packet (.md)</button>
+        <button class="btn" type="button" id="downloadJsonBtn">Download packet (.json)</button>
+      </div>
+
+      <div id="packetPreview"></div>
+    </section>
+
+    <!-- STAGE 4: DISCOVER -->
+    <section class="stage" id="stage-discover" aria-labelledby="h-discover" hidden>
+      <h2 id="h-discover" tabindex="-1">04 · Discover — regional housing directory</h2>
+      <div class="callout info">
+        <strong>Source: Simulated LIHTC Public Data API.</strong> 
+        This is an unfiltered, local demonstration directory. RealDoor does not rank or score these properties based on your profile, nor can it predict acceptance. Availability is always listed as <em>Unknown</em> unless explicitly confirmed by the property. Contact properties directly for current waitlists.
+      </div>
+      
+      <div class="card">
+        <h3>Property Search</h3>
+        <div class="discover-filters" style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-end; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 200px;">
+            <label for="discoverSearch">Search by Name or Address</label>
+            <input type="text" id="discoverSearch" placeholder="e.g. Boston or Heights">
+          </div>
+          <div style="flex: 1; min-width: 200px;">
+            <label for="discoverPop">Target Population</label>
+            <select id="discoverPop">
+              <option value="Any">Any</option>
+              <option value="Family">Family</option>
+              <option value="Seniors (62+)">Seniors (62+)</option>
+              <option value="General">General</option>
+            </select>
+          </div>
+        </div>
+        <div aria-live="polite" id="discoverStatus" class="muted" style="margin-bottom: 1rem;">Loading properties...</div>
+        
+        <div id="propertyList" style="overflow-x: auto;">
+          <!-- Table injected by app.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TRUST & TESTS -->
+    <section class="stage" id="stage-trust" aria-labelledby="h-trust" hidden>
+      <h2 id="h-trust" tabindex="-1">★ · Trust, safety &amp; live tests</h2>
+
+      <div class="callout info">
+        <h3>Responsible-AI controls (demonstrable live)</h3>
+        <ul>
+          <li><strong>No decisioning:</strong> the tool never approves, denies, scores, or ranks. Decision questions are deflected.</li>
+          <li><strong>No hidden proxies:</strong> only the published field allowlist is used; sensitive attributes are never extracted or inferred.</li>
+          <li><strong>Consent &amp; correction:</strong> processing is consented and withdrawable; every field is correctable before <em>and after</em> confirmation; actions and rule versions are logged (never raw document contents or derived financials).</li>
+          <li><strong>Privacy &amp; security:</strong> in-browser ephemeral processing, no server, never trains on uploads; export and session deletion supported; a strict Content-Security-Policy blocks all external requests.</li>
+          <li><strong>Untrusted input:</strong> document text is data — embedded instructions are surfaced and ignored, never executed.</li>
+          <li><strong>Accessibility:</strong> keyboard-complete, visible focus, labeled controls, status announcements, no color-only signals.</li>
+        </ul>
+      </div>
+
+      <h3>Run the required tests</h3>
+      <div class="btn-row">
+        <button class="btn" type="button" id="testRefusal">Refusal test</button>
+        <button class="btn" type="button" id="testInjection">Prompt-injection test</button>
+        <button class="btn" type="button" id="testDelete">Session-deletion test</button>
+      </div>
+      <div id="testOutput"></div>
+
+      <h3 class="mt-lg">Fields never extracted (denylist)</h3>
+      <div id="denylistBody" class="card"></div>
+
+      <h3>Optional encrypted save (privacy)</h3>
+      <div class="card">
+        <p class="small muted">Default is ephemeral: nothing is stored. Optionally save an <strong>encrypted</strong> snapshot (AES-GCM, key derived from your passphrase) to this browser only.</p>
+        <div class="row">
+          <div class="col">
+            <label for="passphrase">Passphrase</label>
+            <input type="password" id="passphrase" autocomplete="new-password" placeholder="choose a passphrase" aria-describedby="passHelp">
+            <p class="field-help" id="passHelp">Never stored or transmitted; used only to derive the encryption key in your browser.</p>
+          </div>
+          <div class="col btn-row align-end">
+            <button class="btn" type="button" id="saveEncBtn">Save encrypted</button>
+            <button class="btn" type="button" id="loadEncBtn">Load encrypted</button>
+            <button class="btn" type="button" id="clearEncBtn">Clear stored</button>
+          </div>
+        </div>
+        <p class="small muted" id="encStatus"></p>
+      </div>
+
+      <h3>Audit log (actions &amp; rule versions — no document contents or derived financials)</h3>
+      <div class="log" id="auditLog" role="log" aria-live="polite" aria-label="Audit log"></div>
+      <button class="btn subtle mt" type="button" id="exportLogBtn">Export audit log (.json)</button>
+    </section>
+  </main>
+
+  <footer class="app">
+    <p><strong>RealDoor is a research prototype.</strong> It is assistive, not adjudicative. It never approves, denies, scores, ranks, or determines eligibility. Income limits are the official HUD FY2026 MTSP figures for the Boston-Cambridge-Quincy, MA-NH HMFA (effective 2026-05-01); see the Data provenance panel in Understand.</p>
+  </footer>
+
+  <div id="printSheet" aria-hidden="true"></div>
+
+  <script src="engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

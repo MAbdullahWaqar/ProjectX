@@ -1,4 +1,4 @@
-/* RealDoor — Ultra Minimalist Aesthetic UI. Targets WCAG 2.2 AA. */
+/* RealDoor — Ultra Minimalist Dashboard Aesthetic UI. Targets WCAG 2.2 AA. */
 
 @font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url('vendor/fonts/inter-latin-400-normal.woff2') format('woff2'); }
 @font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: swap; src: url('vendor/fonts/inter-latin-500-normal.woff2') format('woff2'); }
@@ -139,7 +139,40 @@ header.app .controls { display: flex; gap: 1rem; }
 
 .btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-main { max-width: 800px; margin: 0 auto; padding: 4rem 2rem; }
+/* Dashboard Spread Layout */
+main { max-width: 1400px; margin: 0 auto; padding: 4rem 2rem; }
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 4rem;
+  align-items: start;
+}
+
+.action-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.context-panel {
+  position: sticky;
+  top: 6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.context-card {
+  background: var(--surface-2);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  font-size: 0.95rem;
+}
+.context-card h3 {
+  font-size: 1.05rem;
+  margin-bottom: 0.5rem;
+}
 
 /* Stage navigation - Very Minimalist Tabs */
 nav.stages { 
@@ -155,10 +188,11 @@ nav.stages button:hover { color: var(--ink); }
 nav.stages button[aria-current="true"] { color: var(--ink); border-bottom-color: var(--ink); }
 nav.stages .step-num { display: none; }
 nav.stages .step-title { font-size: 1rem; }
+nav.stages .step-sub { display: none; } /* keep step-sub hidden for aesthetics */
 
 /* Main Content Stages */
 section.stage { 
-  background: var(--surface); 
+  background: transparent; 
   animation: stage-in 0.4s ease forwards; 
 }
 @keyframes stage-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -258,7 +292,7 @@ ul.checklist .ci-reason { font-size: 0.9rem; color: var(--ink-soft); margin-top:
 
 .pill { display: inline-block; font-size: 0.8rem; font-weight: 500; padding: 0.25rem 0.75rem; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); }
 
-footer.app { max-width: 800px; margin: 0 auto; padding: 2rem; color: var(--ink-soft); font-size: 0.85rem; text-align: left; border-top: 1px solid var(--line); }
+footer.app { max-width: 1400px; margin: 0 auto; padding: 2rem; color: var(--ink-soft); font-size: 0.85rem; text-align: left; border-top: 1px solid var(--line); }
 
 /* Onboarding overlay */
 .onboarding {
@@ -269,8 +303,8 @@ footer.app { max-width: 800px; margin: 0 auto; padding: 2rem; color: var(--ink-s
 .onboarding[hidden] { display: none; }
 .ob-card {
   background: var(--surface); color: var(--ink); 
-  border-radius: var(--radius); box-shadow: var(--shadow-lift); max-width: 32rem; max-height: 90vh; overflow: auto;
-  padding: 3rem; animation: ob-in 0.3s ease forwards; text-align: center;
+  border-radius: var(--radius); box-shadow: var(--shadow-lift); max-width: 40rem; max-height: 90vh; overflow: auto;
+  padding: 3rem; animation: ob-in 0.3s ease forwards; text-align: left;
 }
 @keyframes ob-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
 .ob-card h2 { margin-bottom: 1rem; font-size: 1.8rem; letter-spacing: -0.04em; }
@@ -280,6 +314,11 @@ footer.app { max-width: 800px; margin: 0 auto; padding: 2rem; color: var(--ink-s
 .ob-steps li::before { content: "✓"; color: var(--ok); font-weight: bold; }
 
 /* Mobile */
+@media (max-width: 1024px) {
+  .dashboard-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .context-panel { position: static; }
+}
+
 @media (max-width: 768px) {
   main { padding: 2rem 1.5rem; }
   header.app { padding: 1rem 1.5rem; }
